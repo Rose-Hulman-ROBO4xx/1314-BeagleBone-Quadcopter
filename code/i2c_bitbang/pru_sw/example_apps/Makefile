@@ -1,8 +1,8 @@
 -include DIRS
 
-CROSS_COMPILE?=arm-angstrom-linux-gnueabi-
+#CROSS_COMPILE?=arm-angstrom-linux-gnueabi-
 #arm-linux-gnueabihf-#arm-angstrom-linux-gnueabi-
-LIBDIR_APP_LOADER?=../../app_loader/lib
+LIBDIR_APP_LOADER?=../../app_loader/lib -L/usr/xenomai/lib
 INCDIR_APP_LOADER?=../../app_loader/include
 BINDIR_APPLICATIONS?=../bin
 BINDIR_FW?=bin

@@ -13,10 +13,10 @@ HOME=/home/root
 LOGNAME=root
 
 
-cd /home/root/NewCopterRepo/code/i2c_bitbang/pru_sw
+cd /home/debian/1314-BeagleBone-Quadcopter/code/i2c_bitbang/pru_sw
 ./setup_pru.sh
 cd example_apps
 cd bin
 nice -n -20 ./control_alg &
-netcat -l -p 1234 > asdf
+netcat -l -p 1234 > /tmp/asdf
 

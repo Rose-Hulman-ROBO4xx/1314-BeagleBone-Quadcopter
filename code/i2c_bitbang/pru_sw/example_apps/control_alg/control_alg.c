@@ -7,9 +7,13 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <native/task.h>
+#include <native/timer.h>
 
 #include "control_alg.h"
 
+RT_TASK demo_task;
 
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
@@ -29,7 +33,7 @@ int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t
 	static double z_goal = 0;
 	static int zero_throttle_seen = 0;
 	if (f == 0){
-		f = open("asdf", O_NONBLOCK | O_RDONLY);
+		f = open("/tmp/asdf", O_NONBLOCK | O_RDONLY);
 		if (f <=0 ){
 			printf("couldn't open control file\n");
 			pruDataMem_int[0] = 0;
@@ -56,7 +60,7 @@ int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t
 			if (pch[0] == 'p' && pch[1] =='i' && pch[2] == 'd' && pch[3] == ':'){
 				double rp, ri, rd, pp, pi, pd, yp, yi, yd;
 				sscanf(pch, "pid: %lf %lf %lf %lf %lf %lf %lf %lf %lf", &pp, &pi, &pd, &rp, &ri, &rd, &yp, &yi, &yd);
-				printf("%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", pp, pi, pd, rp, ri, rd, yp, yi, yd);
+				//printf("%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", pp, pi, pd, rp, ri, rd, yp, yi, yd);
 
 				PID_pitch->kP = pp;
 				PID_pitch->kI = pi;
@@ -87,11 +91,11 @@ int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t
 					zero_throttle_seen =1;
 				}
 
-				roll_goal/=-2000.0f;
+				roll_goal/=-1500.0f;
 
-				pitch_goal/=2000.0f;
+				pitch_goal/=1500.0f;
 
-				yaw_goal/=(11796*4); //turn 90 degrees per second
+				yaw_goal/=(11796*3); //turn 90 degrees per second
 			}
 			pch = strtok(NULL, "\n");
 		}
@@ -159,11 +163,11 @@ void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gy
 }
 
 void get_imu_frame(imu_data_t * imu_frame){
-	while(!pruDataMem_int[1] &&(pruDataMem_int[1000])){ // wait for pru to signal that new data is available
-	}
+	rt_task_wait_period(NULL);
+	//while(!pruDataMem_int[1] &&(pruDataMem_int[1000])){ // wait for pru to signal that new data is available
+	//}
 
 
-	pruDataMem_int[1] = 0;
 	imu_frame->x_a = (signed short)pruDataMem_int[2];
 	imu_frame->y_a = (signed short)pruDataMem_int[3];
 	imu_frame->z_a = (signed short)pruDataMem_int[4];
@@ -251,12 +255,14 @@ imu_data_t * get_calibration_data(){
 		
 		pruDataMem_int[13] = 0;
 		get_imu_frame(&imu_data);
+		pruDataMem_int[1] = 0;
 	}
 
 	for (i = 0; (i < CALIBRATION_SAMPLES); i++){
 		
 		pruDataMem_int[13] = 0;
 		get_imu_frame(&imu_data);
+		pruDataMem_int[1] = 0;
 
 		calib_data->x_a += imu_data.x_a;
 		calib_data->y_a += imu_data.y_a;
@@ -287,6 +293,7 @@ void output_pwm(pwm_frame_t * pwm_frame_next, pru_pwm_frame_t * pwm_out){
 	*(pwm_out->one) = pwm_frame_next->one;
 	*(pwm_out->two) = pwm_frame_next->two;
 	*(pwm_out->three) = pwm_frame_next->three;
+	pruDataMem_int[1] = 0;
 
 }
 
@@ -314,8 +321,11 @@ void load_pid_values(PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t
 	fclose(fp);
 }
 
-int main (void)
+void demo (void * arg)
 {
+        rt_task_set_periodic(NULL, TM_NOW, 5000000);
+	
+
 
 	comp_filter_t * theta_p = malloc(sizeof(comp_filter_t));
 	comp_filter_t * theta_r = malloc(sizeof(comp_filter_t));
@@ -366,7 +376,7 @@ int main (void)
 		fclose(calib_file);
 	}
 
-	signal(SIGINT, signal_handler);
+//	signal(SIGINT, signal_handler);
 	printf("check calibration data for sanity: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 
 	*z_pos = 0;
@@ -392,12 +402,15 @@ int main (void)
 		get_imu_frame(imu_frame); //called because this basically controls our timesteps
 		count++;
 		if (imu_frame->sample_num != count){
-			printf("Skipped %d frames\n", imu_frame->sample_num-count+1);
+			if (imu_frame->sample_num-count+1){
+				printf("Skipped %d frames\n", imu_frame->sample_num-count+1);
+			}
 			count = imu_frame->sample_num;
 		}
 
 		calibrate_imu_frame(imu_frame, calib_data);
 		if ((count % 20) == 0){
+			printf ("I'm still here!\n");
 
 			/*
 			printf("bias: % 03f", bias);
@@ -406,8 +419,8 @@ int main (void)
 			printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
 			printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 			*/
-			//printf("I: %f D: %f pitch: %f\n", PID_roll->I, PID_roll->D, theta_r->th);
-			printf("goal: pitch: %f roll: %f yaw: %f z: %f\n", goal->pitch, goal->roll, goal->yaw, bias);
+			printf("I: %f D: %f pitch: %f\n", PID_roll->I, PID_roll->D, theta_r->th);
+			//printf("goal: pitch: %f roll: %f yaw: %f z: %f\n", goal->pitch, goal->roll, goal->yaw, bias);
 			//printf("goalyaw: %f\n", goal->yaw);
 
 		}
@@ -427,7 +440,7 @@ int main (void)
 			output_pwm(next_pwm, pwm_out);
 
 
-			fprintf(response_log, "%f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+			//fprintf(response_log, "%f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 			//		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 			time += 1;
 		} else{ // not armed
@@ -448,6 +461,7 @@ int main (void)
 			goal->pitch = 0;
 			theta_y->th = 0;
 		}
+		
 	}
 	printf("exiting...\n");
 
@@ -468,7 +482,37 @@ int main (void)
 	free(next_pwm);	
 	free(cf);
 	free(imu_frame);
-	return(0);
+	//return(0);
+}
+
+
+int main(int argc, char* argv[])
+{
+        signal(SIGTERM, signal_handler);
+        signal(SIGINT, signal_handler);
+
+        /* Avoids memory swapping for this program */
+        mlockall(MCL_CURRENT|MCL_FUTURE);
+
+        /*
+         * Arguments: &task,
+         *            name,
+         *            stack size (0=default),
+         *            priority,
+         *            mode (FPU, start suspended, ...)
+         */
+        rt_task_create(&demo_task, "trivial", 0, 99, 0);
+
+        /*
+         * Arguments: &task,
+         *            task function,
+         *            function argument
+         */
+        rt_task_start(&demo_task, &demo, NULL);
+
+        pause();
+
+        rt_task_delete(&demo_task);
 }
 
 
@@ -533,7 +577,8 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 	P = delta_error;
 	I = (PID_x->I + PID_x->kI*delta_error*DT);
 	I = MIN(MAX_I, MAX(MIN_I,I));
-	PID_x->I = I*.998;
+	//PID_x->I = I*.998;
+	PID_x->I = I;
 	D = PID_x->D - value;
 	PID_x->D = value;
 
