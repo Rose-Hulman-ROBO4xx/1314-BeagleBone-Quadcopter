@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #define PRU_NUM 	1
 #define PRU_FILE_NAME "camera.bin"
 
@@ -17,7 +18,7 @@
 
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
-volatile uint16_t *pru1_ddr;
+volatile uint8_t *pru1_ddr;
 
 void initialize_pru();
 void start_pru();
@@ -68,7 +69,7 @@ void initialize_pru(){
 	exit(-1);
     }
 
-    pru1_ddr= (uint16_t*)mmap(0, PRU_DDR_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd, PRU1_DDR);
+    pru1_ddr= (uint8_t*)mmap(0, PRU_DDR_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd, PRU1_DDR);
     if (pru1_ddr == NULL){
         printf("couldn't map pru1 ddr\n");
         exit(-1);
@@ -77,8 +78,12 @@ void initialize_pru(){
     
 
     pruDataMem_int[0] = 1;
+    pruDataMem_int[1] = 0;
     pruDataMem_int[2] = PRU1_DDR;
-    pruDataMem_int[3] = PRU1_DDR + 640*480;
+    pruDataMem_int[3] = PRU1_DDR+320*240*2;
+    pruDataMem_int[4] = PRU1_DDR+320*240*4;
+    pruDataMem_int[5] = PRU1_DDR+320*240*6;
+    pruDataMem_int[6] = PRU1_DDR+320*240*8;
     printf("WE DIDN'T ALL DIE!\n");
     fflush(stdout);
     
@@ -112,25 +117,37 @@ void uninitialize_pru(){
 
 
     /* Disable PRU and close memory mapping*/
-    prussdrv_pru_disable (PRU_NUM);
-    prussdrv_exit ();
-
 
 }
-int main (void)
+int main (int argc, char ** argv)
 {
-
+	if (argc != 2){
+		printf("you need to give me the number of frames to captures\n");
+		exit(-1);
+	}
+	int num_frames = atoi(argv[1]);
 	initialize_pru();
 	start_pru();
-	uninitialize_pru();
-	FILE * image_data = fopen("image.bin", "w");
+	FILE * image_data = fopen("/media/usb/image.data", "w");
 	if (image_data == NULL){
 		fprintf(stderr, "Failed to open image output file");
 		exit(-1);
 	}
-	fwrite((uint16_t *)pru1_ddr, sizeof(uint16_t), 640*480, image_data);
+	int i;
+	for (i = 0; i < num_frames; i++){
+		while(i==pruDataMem_int[100]){usleep(1000);}
+		int buffer = pruDataMem_int[1];
+		printf("%d buffer=%d\n", pruDataMem_int[100], buffer);
+
+		fwrite(pru1_ddr+buffer*320*240*2, sizeof(uint8_t), 320*203*2, image_data);
+	}
+	uninitialize_pru();
+	fflush(image_data);
 	printf("%d\n", ((volatile uint8_t *)pru1_ddr)[0]);
 	fclose(image_data);
+
+    prussdrv_pru_disable (PRU_NUM);
+    prussdrv_exit ();
 
 	return(0);
 }

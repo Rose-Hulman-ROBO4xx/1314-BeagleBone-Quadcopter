@@ -12,9 +12,12 @@
 #define CAM_HSYNC_MASK     0x200
 #define CAM_CLK_MASK    0x10000
 
-#define CAM_VSYNC 8
-#define CAM_HSYNC 9
-#define CAM_CLK   16
+#define CAM_VSYNC 16 //P9_26
+#define CAM_WE	  9  //P8_29
+#define CAM_RCK   8  //P8_27
+#define CAM_OE    10 //P8_28
+#define CAM_RRST  11 //P8_30
+#define DELAY     mov r0, r0
 
     #define GPIO1 0x4804c000
 #define GPIO2 0x481ac000
@@ -28,97 +31,200 @@
 #define buff1 r12
 #define pixelByteCount   r13
 #define lineCount    r14
-#define numCols r8
-#define numRows r9
 #define exit r6
-
+#define num_bytes 393216
+#define NUM_BYTES r17
+#define SET_RCK set r30, r30, CAM_RCK
+#define CLR_RCK clr r30, r30, CAM_RCK
+#define buffNo r8
+#define buff2 r9
 MEMACCESSPRUDATARAM:
 
-    MOV exit,EXIT_CTRL*4
-// Enable OCP master port
-    LBCO      r0, CONST_PRUCFG, 4, 4
-    CLR     r0, r0, 4         // Clear SYSCFG[STANDBY_INIT] to enable OCP master port
-    SBCO      r0, CONST_PRUCFG, 4, 4
-    
-    // set parallel input capture
-    LBCO      r0, CONST_PRUCFG, 0xC, 4
-    set     r0, r0, 0
-    clr     r0, r0, 1
-    SBCO      r0, CONST_PRUCFG, 0xC, 4
-    
+	MOV exit,EXIT_CTRL*4
+	// Enable OCP master port
+	LBCO      r0, CONST_PRUCFG, 4, 4
+	CLR     r0, r0, 4         // Clear SYSCFG[STANDBY_INIT] to enable OCP master port
+	SBCO      r0, CONST_PRUCFG, 4, 4
 
-    MOV       swapBuff, CAM_SWAP_BUFF*4
-    MOV       buff0, CAM_BUFF_0*4
-    LBBO      buff0, buff0, 0, 4
-    MOV       buff1, CAM_BUFF_1*4
-    LBBO      buff1, buff1, 0, 4
-    
-    MOV       currBuff, buff0
-    MOV       numCols, 639*2
-    MOV       numRows, 480
-    mov		r15, 0
-    mov r16,   100*4
-  Loop:
-    add r15, r15, 1
-    sbbo r15, r16, 0, 4
-    MOV   lineCount, 0
-    
-    WBC   CAM_BITS, CAM_VSYNC
-    WBS   CAM_BITS, CAM_VSYNC
-    
-    Lines:
-      MOV   pixelByteCount, 0
-      
-      WBC   CAM_BITS, CAM_HSYNC
-      WBS   CAM_BITS, CAM_HSYNC
+	// set parallel input capture
+	LBCO      r0, CONST_PRUCFG, 0xC, 4
+	clr     r0, r0, 0
+	clr     r0, r0, 1
+	SBCO      r0, CONST_PRUCFG, 0xC, 4
 
-      MOV   r0.b0, CAM_BITS.b0
-      WBC   CAM_BITS, CAM_CLK
-      WBS   CAM_BITS, CAM_CLK
-      MOV   r0.b1, CAM_BITS.b0
- 
-      SBBO  r0.w0, currBuff, pixelByteCount, 2
-      ADD   pixelByteCount, pixelByteCount, 2
+	clr       R30, R30, CAM_OE
+	MOV       swapBuff, CAM_SWAP_BUFF*4
+	MOV       buff0, CAM_BUFF_0*4
+	LBBO      buff0, buff0, 0, 4
+	MOV       buff1, CAM_BUFF_1*4
+	LBBO      buff1, buff1, 0, 4
 
-      Pixels:
-        
-        WBC   CAM_BITS, CAM_CLK
-        WBS   CAM_BITS, CAM_CLK
-        MOV   r0.b0, CAM_BITS.b0
-      
-        WBC   CAM_BITS, CAM_CLK
-        WBS   CAM_BITS, CAM_CLK
-        MOV   r0.b1, CAM_BITS.b0
+	MOV       buff2, CAM_BUFF_2*4
+	LBBO      buff2, buff2, 0, 4
+	
+	MOV       currBuff, buff0
+	mov	  buffNo, 0
+	mov		r15, 0
+	mov r16,   100*4
+	mov NUM_BYTES, num_bytes
 
-        SBBO  r0.w1, currBuff, pixelByteCount, 2
-        ADD   pixelByteCount, pixelByteCount, 2
-        QBGE  Pixels, pixelByteCount, numCols
-    
-      ADD   currBuff, currBuff, pixelByteCount
-      ADD   lineCount, lineCount, 1
-      QBGE  Lines, lineCount, numRows
-    
-    MOV r2, 6<<22
-    MOV r3, GPIO1 | GPIO_DATAOUT
-    LBBO r1, r3, 0, 4
-    XOR  r1, r1, r2
-    SBBO r1, r3, 0, 4
-    
-    LBBO r0, swapBuff, 0, 4
-    QBNE Loop, r15, 5
-    
-    MOV   r0, 0
-    SBBO  r0, swapBuff, 0, 4
-    MOV   r0, buff0
-    MOV   buff0, buff1
-    MOV   buff1, r0
-    MOV   currBuff, buff0
+		Loop:
+	add r15, r15, 1 //increment frame count
+	sbbo r15, r16, 0, 4
 
-    LBBO r0, exit, 0, 4
-    QBNE Quit, r15, 5
-    
-    //QBA Loop
-    
+
+		WBS CAM_BITS, CAM_VSYNC //Wait for a frame to start
+		CLR   R30, R30, CAM_WE //enable writing to fifo
+		WBC   CAM_BITS, CAM_VSYNC //wait for frame to end
+		SET   R30, R30, CAM_WE //disable writing to fifo
+		SET   R30, R30, CAM_RCK //need to pulse the clock for it to take
+		CLR   R30, R30, CAM_RRST //reset the read pointer
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		CLR   R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		SET   R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		CLR   R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		SET   R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		CLR   R30, R30, CAM_RCK
+		
+		SET   R30, R30, CAM_RRST //reset the read pointer
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		MOV   pixelByteCount, 0
+
+		Pixels:
+			MOV   r0.b0, CAM_BITS.b0
+			SET R30, R30, CAM_RCK
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			CLR R30, R30, CAM_RCK
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			MOV   r0.b1, CAM_BITS.b0
+			SET R30, R30, CAM_RCK
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			CLR R30, R30, CAM_RCK
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			SBBO  r0.b0, currBuff, pixelByteCount, 2
+			ADD   pixelByteCount, pixelByteCount, 2
+			QBGE  Pixels, pixelByteCount, NUM_BYTES
+	
+	
+	QBEQ handleBuff0, buffNo, 0
+	QBEQ handleBuff1, buffNo, 1
+	QBEQ handleBuff2, buffNo, 2
+	QBEQ handleBuff3, buffNo, 3
+	QBEQ handleBuff4, buffNo, 4
+handleBuff0:
+	mov currBuff, CAM_BUFF_1*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 1
+	QBA BUFF_DONE
+handleBuff1:
+	mov currBuff, CAM_BUFF_2*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 2
+	QBA BUFF_DONE
+handleBuff2:
+	mov currBuff, CAM_BUFF_3*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 3
+	QBA BUFF_DONE
+
+
+handleBuff3:
+	mov currBuff, CAM_BUFF_4*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 4
+	QBA BUFF_DONE
+
+
+handleBuff4:
+	mov currBuff, CAM_BUFF_0*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 0
+	QBA BUFF_DONE
+
+BUFF_DONE:
+
+	LBBO r0, exit, 0, 4
+	QBEQ Quit, r0, 0
+
+	QBA Loop
+
 
 
 

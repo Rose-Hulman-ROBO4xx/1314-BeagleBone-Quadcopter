@@ -13,8 +13,8 @@
 #define RAD_TO_DEG	57.2957795f
 #define DT		.005f
 #define PWM_OFF		110000
-#define PWM_MIN		120000//110000
-#define PWM_MAX		170000//160000
+#define PWM_MIN		110000
+#define PWM_MAX		160000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 #define BIAS_INCREASE_RATE 1
@@ -28,17 +28,17 @@
 #define I_DEF		15  // 15	
 #define D_DEF		20  // 20
 
-#define BIAS0 20000.0f
-#define BIAS1 20000.0f
-#define BIAS2 20000.0f
-#define BIAS3 20000.0f
+#define BIAS0 10000.0f
+#define BIAS1 10000.0f
+#define BIAS2 10000.0f
+#define BIAS3 10000.0f
 
 #define MULT0 1.00f
 #define MULT1 1.00f
 #define MULT2 1.00f
 #define MULT3 1.00f
 
-#define BIAS_MAX 10000 //50000
+#define BIAS_MAX 30000
 #define PID_FILE "pid_values.txt"
 typedef struct imu_data_t{
 	double x_a;
