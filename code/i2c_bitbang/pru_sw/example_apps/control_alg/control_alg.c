@@ -46,8 +46,7 @@ void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gy
 }
 
 void get_imu_frame(imu_data_t * imu_frame){
-	// Possibly change to an interrupt? (Mike)
-	while(!pruDataMem_int[1] && !pruDataMem_int[0]){ // wait for pru to signal that new data is available
+	while(!pruDataMem_int[1]){ // wait for pru to signal that new data is available
 	}
 	pruDataMem_int[1] = 0;
 		imu_frame->x_a = (signed short)pruDataMem_int[2];
@@ -137,7 +136,6 @@ imu_data_t * get_calibration_data(){
 	for (i = 0; (i < CALIBRATION_SAMPLES); i++){
 		get_imu_frame(&imu_data);
 		
-//		printf("%f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 		calib_data->x_a += imu_data.x_a;
 		calib_data->y_a += imu_data.y_a;
 		calib_data->z_a += imu_data.z_a;
@@ -156,10 +154,10 @@ imu_data_t * get_calibration_data(){
 }
 
 void init_pwm(pwm_frame_t * pwm_frame){
-	pwm_frame->zero = PWM_MIN;
-	pwm_frame->one = PWM_MIN;
-	pwm_frame->two = PWM_MIN;
-	pwm_frame->three = PWM_MIN;
+	pwm_frame->zero = PWM_OFF;
+	pwm_frame->one = PWM_OFF;
+	pwm_frame->two = PWM_OFF;
+	pwm_frame->three = PWM_OFF;
 }
 
 void output_pwm(pwm_frame_t * pwm_frame_next, pru_pwm_frame_t * pwm_out){
@@ -176,7 +174,7 @@ int main (void)
 	comp_filter_t * theta_r = malloc(sizeof(comp_filter_t));
 	comp_filter_t * theta_y = malloc(sizeof(comp_filter_t));
 	pwm_frame_t * next_pwm = malloc(sizeof(comp_filter_t));
-	double * z_pos = malloc(sizeof(double)); //z position
+	double * z_pos = malloc(sizeof(double)); 
 	double * z_vel = malloc(sizeof(double));
 	PID_t * PID_pitch = malloc(sizeof(PID_t));
 	PID_t * PID_roll = malloc(sizeof(PID_t));
@@ -193,10 +191,32 @@ int main (void)
 	fprintf(response_log, "bias,pitch,cf_pitch,roll,cf_roll,yaw,cf_yaw,z,m0,m1,m2,m3\n");
 
 	initialize_pru();
-	start_pru();
 	pru_pwm_frame_t * pwm_out = get_pwm_pointer();
 	init_pwm(next_pwm);
 	output_pwm(next_pwm, pwm_out);
+	start_pru();
+
+	imu_data_t * calib_data;
+	FILE * calib_file = fopen("./cal.txt", "r");
+	if (calib_file == NULL){
+		printf("generating new calibration data\n");
+		calib_data = get_calibration_data();
+		calib_file = fopen("./cal.txt", "w");
+		if (calib_file == NULL){
+			fprintf(stderr, "couldn't open cal.txt\n");
+		} else{
+			fprintf(calib_file, "%f,%f,%f,%f,%f,%f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
+			fclose(calib_file);
+		}
+
+		uninitialize_pru();
+		exit(-1);
+	} else{
+		calib_data = malloc(sizeof(imu_data_t));
+		fscanf(calib_file, "%lf,%lf,%lf,%lf,%lf,%lf\n", &(calib_data->x_a), &(calib_data->y_a), &(calib_data->z_a), &(calib_data->x_g), &(calib_data->y_g), &(calib_data->z_g));
+		printf("cal data: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
+		fclose(calib_file);
+	}
 	// P,I,D values should probably be different between the different loops (Mike)
 	// They were coded like this because we have no idea what they will actually be until we have a quad to test with.  At that time, we will start playing with the values (chris)
 	init_PID(PID_pitch, P_DEF, I_DEF, D_DEF);
@@ -205,11 +225,11 @@ int main (void)
 	init_PID(PID_z, P_DEF, I_DEF, D_DEF);
 	get_set_point(goal);
 
-	imu_data_t * calib_data;
-	calib_data = get_calibration_data();
         signal(SIGINT, signal_handler);
 	printf("check calibration data for sanity: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 	
+	uninitialize_pru();
+	exit(-1);
 	
 	*z_pos = 0;
 	*z_vel = 0;
@@ -224,20 +244,12 @@ int main (void)
 	int bias = 0;
 	int count = 0;
 	while(pruDataMem_int[0] != 0){
-		
 		if (bias < BIAS_MAX){
 			bias += BIAS_INCREASE_RATE;
 		} else{
 			//printf("bias maxed out\n");
 		}
 
-		/*
-		printf("herp\n");
-		*/
-
-		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
-		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
-		
 		get_imu_frame(imu_frame);
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
@@ -335,7 +347,6 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 	D = PID_x->kD*((delta_error - PID_x->D) / DT);
 	PID_x->D = delta_error;
 
-	//printf("PID: % 3.5f\n", P+I+D);
 	return P + I + D;
 }
 

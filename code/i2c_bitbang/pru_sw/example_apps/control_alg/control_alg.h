@@ -11,6 +11,7 @@
 #define PI 3.141592653589793238462643383279502884197169399375105
 #define RAD_TO_DEG	57.2957795f
 #define DT		.005f
+#define PWM_OFF		110000
 #define PWM_MIN		120000//110000
 #define PWM_MAX		170000//160000
 #define MIN(a,b)	(a<b ? a : b)
@@ -19,9 +20,9 @@
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
-#define P_DEF		10 //20
-#define I_DEF	 	5	
-#define D_DEF		7
+#define P_DEF		18 // 10
+#define I_DEF		0  // 5	
+#define D_DEF		0  // 7
 
 #define BIAS0 0.0f
 #define BIAS1 0.0f

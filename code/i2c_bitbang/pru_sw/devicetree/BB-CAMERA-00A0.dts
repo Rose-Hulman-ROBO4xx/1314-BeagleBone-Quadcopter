@@ -20,7 +20,7 @@
 	/* state the resources this cape uses */
 	exclusive-use =
 		/* the pin header uses */
-	        "P8.46",
+/*	        "P8.46",
         	"P8.45",
 	        "P8.44",
 	        "P8.43",
@@ -28,9 +28,9 @@
 	        "P8.41",
 	        "P8.40",
 	        "P8.39",
-	        "P9.26",
+//	        "P9.26",
 		"P8.27",
-		"P8.29",
+		"P8.29",*/
 		"P9.31",
 
 		/* the hardware ip uses */
@@ -41,7 +41,8 @@
 		__overlay__ {
 			bb_uart1_pins: pinmux_bb_uart1_pins {
 				pinctrl-single,pins = <
-					0x180 0x2e /* P9.26 uart1_rxd.uart1_rxd  INPUT  */
+/*
+					0x180 0x2e
 					0x0a4 0x2e
 					0x0a0 0x2e
 					0x0ac 0x2e
@@ -50,9 +51,9 @@
 					0x0b0 0x2e
 					0x0bc 0x2e
 					0x0b8 0x2e
-					0x180 0x2e
+//					0x180 0x2e
 					0x0e0 0x2e
-					0x0e4 0x2e
+					0x0e4 0x2e*/
 					0x190 0x26
 
 				>;
