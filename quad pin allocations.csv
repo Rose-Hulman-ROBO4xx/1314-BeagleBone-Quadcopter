@@ -1,0 +1,25 @@
+CONSULT CHRIS BEFORE CHANGING ANYTHING HERE														
+You can't just move the pins willy nilly.  You need to know all the design constraints.														
+														
+	CAMERA			SAFTEY			IMU			PWM			Ultrasonic	
+	CAM D0	P8_45		KILL SWITCH	P9_27		SCL	P9_13		PWM_0	P9_31	moved pwm to PRU direct I/O	TRIG	P9_11
+	CAM D1	P8_46					SDA	P9_14		PWM_1	P9_29		ECHO	P9_16
+	CAM D2	P8_43					INT	P9_15		PWM_2	P9_30			
+	CAM D3	P8_44								PWM_3	P9_28			
+	CAM D4	P8_41												
+	CAM D5	P8_42												
+	CAM D6	P8_39												
+	CAM D7	P8_40												
+	CAM_3v3	+3.3v												
+	CAM_SIOC	P9_19	check											
+	CAM_SIOD	P9_20	check											
+	CAM_SYNC	P9_26												
+	CAM_HREF	N/C												
+	CAM_RST	+3.3v												
+	CAM_PWDN	GND												
+	CAM_STA (?)	N/C												
+	CAM_RCK	P8_27												
+	CAM_WE	P8_29												
+	CAM_OE	P8_28												
+	CAM_WRST	CAM_SYNC	Ran into tight I/O constraints	 couldn't have internal mmc unless I did this hack.										
+	CAM_RRST	P8_30												
