@@ -339,8 +339,8 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	
 	d_z = 0;//FIXME
 	d_yaw = 0;
-	// d_roll = 0;
-	d_pitch = 0;
+	d_roll = 0;
+	//d_pitch = 0;
 
 	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN;
 	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN;
