@@ -1,266 +1,122 @@
-.userControlButton {
-    -moz-appearance: button;
-    -ms-appearance: button;
-    -o-appearance: button;
-    -webkit-appearance: button;
-    appearance: button;
-    text-decoration: none;
-    color: #000;
-    padding: 0.2em 0.4em;
-}
-body {
-    background-color: #657077;
-    margin: 20px;
+#tilogo {
+	width: 200px;
+	margin-left: -200px;
 }
 
-.header {
-    background-color:#dd4b39;
-    margin: 0px;
-    padding: 0px;
-}
-.logo{
-	width:100%;
+#roselogo {
+	width: 200px;
+	margin-right: -200px;
 }
 
-.logo li {
-	list-style:none;
-	display:inline-block;
-	width:32%;
-	margin:5px;
-	padding:0px;
-	vertical-align:middle;
-	height:100px;
-}
-#TI_logo {
-    background-color:#e5e5e5;
-}
-#TI_QC_logo {
-	margin-left:30%;
-	display:inline-block;
-	width:15%;
-	height:75%;
-}
-#slogan {
-	margin-left:60%;
-	margin-top:-9.42%;
-	display:inline-block;
-	width:15%;
-	height:75%;
-}
-#middle_menu {
-    background-color:#e5e5e5;
-}
-
-
-#middle_menu li {
-	width:100%;
-	margin-top:4%;
+#banner {
+	width: 100%;
+	text-align: center;
+	vertical-align: middle;
 	color:#a1022d;
 	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-	font-size:35px;
-	font-family:sans-serif;
-}
-#rose_logos {
-    background-color:#e5e5e5;
 }
 
-#rose_logo {
-    margin-left:5%;
-	display:block;
-	width:50%;
-	height:50%;
-}
-#rose_robotics_logo{
-	margin-left:60%;
-	margin-top:-1.75%;
-	display:block;
-	width:30%;
-	height:60%;
+#header {
+	height: 200px;
+	background-color: #FFFFDD;
+	padding-left: 200px;
+	padding-right: 200px;
+	font-size: 30px;
+	border-bottom: solid 2px #909090; 
 }
 
+#header .column {
+	position: relative;
+	float: left;
+	height: 100%;
+	overflow: auto;
+}
+
+#TI_QC_logo, #slogan, #rose_logo, #rose_robotics_logo {
+	width: 50%;
+	vertical-align: middle;
+	font-family: "Verdana", sans-serif;
+}
+
+#rose_logo, #rose_robotics_logo {
+	float: right;
+	position: absolute;
+	bottom: 0;
+}
 
 #menu {
-    margin: 0px auto 0px auto;
-    width:100%;
+	overflow: auto;
+	padding: 3%;
+	padding-top: 5px;
+	padding-bottom: 5px;
 }
 
-ul.tabs li {
-	background-color:grey;
-	width:45%;
-    list-style:none;
-    display:inline-block;
-	text-align:center;
-	height:50%;
-	vertical-align:middle;
-	margin-left:2.3%;
-	padding-left:1.4%;
+#menu .menu {
+	border-radius: 10px;
+	border: solid 2px #909090;
+	width: 32.5%;
+	height: 25px;
+	text-align: center;
+	font-size: 20px;
+	font-family: "Verdana", sans-serif;
+	font-weight: bold;
+	background-color: #D8D8D8;
+	display: inline-block;
+}
+
+#menu .menu:hover {
+	background-color: #C8C8C8;
+}
+
+#menu .menu:active{
+	background-color: #99CCCC;
+}
+
+#container {
+	background-color: #F0F0F0;
+	text-align: center;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+#container div {
+	border-bottom: solid 2px #9090;
+	
+}
+
+body {
+	display: inline;
+	overflow: auto;
+}
+
+
+#footer {
+	text-align: center;
+	vertical-align: middle;
+	font-size: 9px;
 }
 
 ul.sub_tabs li {
-	background-color:grey;
-	width:30%;
+	background-color: #D8D8D8;
+	width:15%;
     list-style:none;
 	text-align:center;
 	height:50%;
-	display:inline-text;
-}
-
-#instructions_tab, #hud_tab, #diagnostics_tab, #opensource_tab, #forum_tab, #purchase_tab{
-	display:none;
-}
-
-ul.tabs a {
-    color:#ffebb5;
-    text-decoration:none;
-    font-size:40px;
-    font-family:Verdana, Arial;
-    font-weight:bold;
-    text-transform:uppercase;
-}
-
-ul.tabs a.active {
-    color:#000000;
-    text-decoration:none;
-    font-size:40px;
-    font-family:Verdana, Arial;
-    font-weight:bold;
-    text-transform:uppercase;
-}
-
-ul.tabs li:hover {
-    background-color:#2f343a;
-    border-color:#2f343a;
-}
-ul.tabs li.active {
-    background-color:#ffffff;
-    color:#282e32;
-    border:1px solid #464c54;
-    border-bottom: 1px solid #ffffff;
-}
-.content {
-    background-color:#ffffff;
-    margin-top:20px;
-    padding:10px;
-    border:1px solid #464c54;
-}
-
-.movements{
-	background-color:#777777;
-}
-
-.movements li{
-	display:block;
-}
-
-ul.tabs{
-    margin-left:auto;
-	margin-right:auto;
-    padding:0px;
-}
-.content ul {
-    margin:0px;
-    padding:0px 20px 0px 20px;
-}
-.content ul li {
-    list-style:none;
-    border-bottom:1px solid #d6dde0;
-    padding-top:15px;
-    padding-bottom:15px;
-    font-size:13px;
-}
-.content ul li a {
-    text-decoration:none;
-    color:#3e4346;
-}
-.content ul li a small {
-    color:#8b959c;
-    font-size:9px;
-    text-transform:uppercase;
-    font-family:Verdana, Arial;
-    position:relative;
-    left:4px;
-    top:0px;
-}
-.content ul li a {
-    text-decoration:none;
-    color:#3e4346;
-}
-.content ul li a small {
-    color:#8b959c;
-    font-size:9px;
-    text-transform:uppercase;
-    font-family:Verdana, Arial;
-    position:relative;
-    left:4px;
-    top:0px;
-}
-.content ul li:last-child {
-    border-bottom:none;
-}
-.quad_image{
-	margin:auto;
-	width:70%;
-}
-.movements{
-	display:none;
-}
-
-#home_images{
-	display:block;
-}
-
-#home_images ul{
-	display:inline-block;
-	width:30%;
-}
-
-#home_images ul li{
-	display:block;
-	}
-
-#Cape{
-	width:200%;
-	height:200%;
-	margin-top:-60%;
-}
-#Frame{
-	width:200%;
-	height:200%;
-	margin-bottom:-10%;
-}
-
-#QuadCopterImage{
-	width:400%;
-	height:400%;
-	margin-left:-100%;
-}
-#BBB_li{
-	display:block;
-	margin-top:5%;
-	padding-bottom:10%;
-}
-
-#BBB_li2{
-	display:inline-block;
-	width:30%;
-}
-#BBB{
-	width:300%;
-	height:300%;
-}
-#MPU{
-	width:100%;
-	height:100%;
 	display:inline-block;
 }
-#UltraSonic{
-	width:100%;
-	height:100%;
-	display:inline-block;
+
+.sub_tabs {
+	padding: 0px;
 }
-#Camera{
-	width:100%;
-	height:100%;
-	display:inline-block;
+
+#movements li {
+	display: inline-block;
 }
+
+
+
+
+
+
+
 

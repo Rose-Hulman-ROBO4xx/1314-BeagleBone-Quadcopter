@@ -2,7 +2,7 @@
 // From Getting Started With node.js and socket.io 
 // http://codehenge.net/blog/2011/12/getting-started-with-node-js-and-socket-io-v0-7-part-2/
 // This is a general server for the various web frontends
-"use strict";
+"use strict"
 
 var port = 1337, // Port to listen on
     http = require('http'),
@@ -16,36 +16,15 @@ var port = 1337, // Port to listen on
 
 var controlDataFile = '/tmp/BeagleQuad_ControlData.txt';
 
+var stream = fs.createWriteStream(controlDataFile, {flags: 'w'});
+
+var lines;
+
 function writeToFile(input){
-	fs.open(controlDataFile, 'a', undefined, function(error, fd){
-		if(error){
-			if(fd){
-				fs.close();
-			}
-			console.log('Error opening fifo: ' +error);
-		return;
-		}
-		fs.write(fd, input, 0, input.length, null, function(error, written, buffer){
-			if(fd){
-				fs.close(fd);
-			}
-			if(error){
-				console.log('Error writing to fifo: ' + error);
-			}
-			else{
-				if(written != input.length){
-					console.log("Error: Did not write all data to fifo stream");
-				}
-			}
-		});
-	});
+	for(var i = 0; i < input.length; i++){
+		stream.write(input[i]);
+	}
 }
-
-// Initialize various IO things.
-function initIO() {
-}
-
-initIO();
 
 // Create a server and get it listening
 server = http.createServer(function (req, res) {
@@ -73,17 +52,40 @@ io.set('log level', 2);
 // for Exposed events
 
 // on a 'connection' event
+
 io.sockets.on('connection', function (socket) {
 
     console.log("Connection " + socket.id + " accepted.");
 
-    /*
-        Server side callback for our key bindings
-    */
+    
+    //    Server side callback for our key bindings
+    
+    
     socket.on('keyPress', function (key, value) {
 	//console.log("CONSOLE LOG... " + key + ":"+value);
 	writeToFile(key+":"+value);
     });
+
+    socket.on('controllerButtonEvent', function (key, value) {
+      	//console.log("controllerButtonEvent: button:" + key + " value:" + value);
+		writeToFile(key+":"+value);
+	    // pick off which value was sent via switch case and write to file
+    });
+
+    socket.on('controllerAxesEvent', function(key, value){
+       // console.log("controllerButtonEvent: axes:" + key + " value:" + value);
+	writeToFile(key+":"+value);
+	   });
+
+	
+
+    socket.on('controlEvent', function (controlDataArray){
+		var strToWrite = "";
+		controlDataArray.forEach(function(value){
+			strToWrite = strToWrite.concat(String(value));
+		});
+		writeToFile(strToWrite);
+	});
 
 
     // Boilerplate to deal with connection managing
@@ -94,7 +96,12 @@ io.sockets.on('connection', function (socket) {
     });
     connectCount++;
     console.log("connectCount = " + connectCount);
+
+//    socket.on('close', function(){
+//		    closeServer();
+//	    });
 });
+
 
 // Send a 404 page not found when an issue occurs
 function send404(response) {
