@@ -106,7 +106,7 @@
 #define CONST_DSPL2     C28
 #define CONST_L3RAM     C30
 #define CONST_DDR       C31
-
+#define PRU_CONFIG	C4
 // Address for the Constant table Programmable Pointer Register 0(CTPPR_0)      
 #define CTPPR_0         0x7028
 // Address for the Constant table Programmable Pointer Register 1(CTPPR_1)      

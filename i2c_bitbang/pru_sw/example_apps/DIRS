@@ -1,14 +1,14 @@
 APP_DIRS :=
 
 APP_DIRS += imu
-APP_DIRS += PRU_PWM
+APP_DIRS += pwm
 
 ASSEM_FILES :=
 
 ASSEM_FILES += imu/imu.p
-ASSEM_FILES += PRU_PWM/PRU_PWM.p
+ASSEM_FILES += pwm/pwm.p
 
 BIN_FILES :=
 
 BIN_FILES += imu.bin
-BIN_FILES += PRU_PWM.bin
+BIN_FILES += pwm.bin

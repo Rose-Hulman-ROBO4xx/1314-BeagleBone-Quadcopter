@@ -21,7 +21,15 @@
 
 #define PWM_0_WRITE_BANK	GPIO1
 #define PWM_0_WRITE_BIT_NUMBER	28
-#define DELAY_TIME		1000
+#define DELAY_TIME		2000000
+#define PRU_CONFIG		C4
+
+#define ARG_0 			R19
+#define ARG_1			R20
+#define ARG_2			R21
+#define RET_VAL_0		R22
+#define RET_VAL_1		R23
+#define RET_VAL_2		R24
 
 
 PWM_MAIN:
@@ -33,11 +41,16 @@ PWM_MAIN:
 	ST32      r0, r1
 
 	mov SP_reg, 100 // set up the stack
-	call ENABLE_GPIO_AND_SET_DIRECTIONS
-
-    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 28, 4
-
+	//call ENABLE_GPIO_AND_SET_DIRECTIONS
+	mov r10, 0
+	mov r11, 10
+MAIN_PWM_LOOP:
+	add r10, r10, 1
+	mov ARG_0, 150000
+	call SEND_PWM_PULSE
+	call DELAY
+	qblt MAIN_PWM_LOOP, r11, r10
+	
 
     // Send notification to Host for program completion
     MOV R31.b0, PRU0_ARM_INTERRUPT+16
@@ -59,6 +72,31 @@ DELAY_LOOP:
 	add SP_reg, SP_reg, 8
 	ret
 //--------------------------------------------------
+SEND_PWM_PULSE:
+	//ARG_0: channel 0 high period
+	sub SP_reg, SP_reg, 4
+	sbco RA_REG, CONST_PRUDRAM, SP_reg, 4
+	sub SP_reg, SP_reg, 8
+	sbco r0, CONST_PRUDRAM, SP_reg, 8
+	
+	call SET_PWM_0
+	mov r1, ARG_0
+	mov r0, 0
+PWM_PULSE_LOOP_0:
+	add r0, r0, 1
+	qbgt PWM_PULSE_LOOP_0, r1, r0
+	
+	call CLEAR_PWM_0
+	
+	lbco r0, CONST_PRUDRAM, SP_reg, 8
+	sub SP_reg, SP_reg, 8
+	lbco RA_REG, CONST_PRUDRAM, SP_reg, 4
+	sub SP_reg, SP_reg, 4
+	
+	ret
+
+
+//--------------------------------------------------
 ENABLE_GPIO_AND_SET_DIRECTIONS:
 	sub SP_reg, SP_reg, 8 //push r0 and r1 onto stack
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
@@ -76,6 +114,27 @@ ENABLE_GPIO_AND_SET_DIRECTIONS:
 	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
 	add SP_reg, SP_reg, 8
 	RET
+
+
+//---------------------------------------------------
+RESET_PRU_CYCLE_COUNT_REGISTER:
+	
+	lbco r0, PRU_CONFIG, 0, 4
+	clr r0, r0, 3 //clear the bit for the PRU_CYCLE_COUNTER
+	sbco r0, PRU_CONFIG, 0, 4
+	
+	//now clear the PRU_CYCLE_COUNTER
+	mov r0, 0
+	sbco r0, PRU_CONFIG, 0x0C, 4
+	
+	//now enable the PRU_CYCLE_COUNTER
+	
+	lbco r0, PRU_CONFIG, 0, 4
+	set r0, r0, 3
+	sbco r0, PRU_CONFIG, 0, 4
+
+	ret
+	
 
 //---------------------------------------------------
 SET_PWM_0:
