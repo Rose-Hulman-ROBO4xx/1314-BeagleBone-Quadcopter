@@ -82,57 +82,57 @@ document.onkeydown = function(e) {
 			//left arrow = yaw left
 			case 37:
 				// alert("Left pressed!");
-				controlDataString(YAW, 16384);
-				//socket.emit("keyPress", "yaw", 16384);
+				controlDataString(YAW, 32768);
+				//socket.emit("keyPress", "yaw", 32768);
 				break;
 
 			// Up arrow = throttle up
 			case 38:
 				// alert("Up pressed!");
-				controlDataString(THROTTLE, 16384);
-				//socket.emit("keyPress","up", 16384);
+				controlDataString(THROTTLE, 32768);
+				//socket.emit("keyPress","up", 32768);
 				break;
 
 			// Right arrow = yaw right
 			case 39:
 				// alert("Right pressed!");
-				controlDataString(YAW, -16384);
-				//socket.emit("keyPress", "yaw" , -16384);
+				controlDataString(YAW, -32768);
+				//socket.emit("keyPress", "yaw" , -32768);
 				break;
 
 			// Down arrow = throttle down
 			case 40:
 				// alert("Down pressed!");
-				controlDataString(THROTTLE, -16384);
-				//socket.emit("keyPress", "up", -16384);
+				controlDataString(THROTTLE, -32768);
+				//socket.emit("keyPress", "up", -32768);
 				break;
 
 			// W key = pitch down
 			case 87:
 				// alert("W pressed!");
-				controlDataString(PITCH, 16384);
-				//socket.emit("keyPress", "pitch", 16384);
+				controlDataString(PITCH, 32768);
+				//socket.emit("keyPress", "pitch", 32768);
 				break;
 
 			// A key = roll left
 			case 65:
 				// alert("A pressed!");
-				controlDataString(ROLL, 16384);
-				//socket.emit("keyPress", "roll", 16384);
+				controlDataString(ROLL, 32768);
+				//socket.emit("keyPress", "roll", 32768);
 				break;
 
 			// S key = pitch up
 			case 83:
 				// alert("S pressed!");
-				controlDataString(PITCH, -16384);
-				//socket.emit("keyPress", "pitch", -16384);
+				controlDataString(PITCH, -32768);
+				//socket.emit("keyPress", "pitch", -32768);
 				break;
 
 			// D key = roll right
 			case 68:
-				controlDataString(ROLL, -16384);
+				controlDataString(ROLL, -32768);
 				// alert("D pressed!");
-				//socket.emit("keyPress", "roll", -16384);
+				//socket.emit("keyPress", "roll", -32768);
 				break;
 
 			default:
@@ -156,56 +156,56 @@ document.onkeyup = function(e){
 			case 37:
 				// alert("Left pressed!");
 				controlDataString(YAW, 0);
-				//socket.emit("keyPress", "yaw", 16384);
+				//socket.emit("keyPress", "yaw", 32768);
 				break;
 
 			// Up arrow = throttle up
 			case 38:
 				// alert("Up pressed!");
 				controlDataString(THROTTLE, 0);
-				//socket.emit("keyPress","up", 16384);
+				//socket.emit("keyPress","up", 32768);
 				break;
 
 			// Right arrow = yaw right
 			case 39:
 				// alert("Right pressed!");
 				controlDataString(YAW, 0);
-				//socket.emit("keyPress", "yaw" , -16384);
+				//socket.emit("keyPress", "yaw" , -32768);
 				break;
 
 			// Down arrow = throttle down
 			case 40:
 				// alert("Down pressed!");
 				controlDataString(THROTTLE, 0);
-				//socket.emit("keyPress", "up", -16384);
+				//socket.emit("keyPress", "up", -32768);
 				break;
 
 			// W key = pitch down
 			case 87:
 				// alert("W pressed!");
 				controlDataString(PITCH, 0);
-				//socket.emit("keyPress", "pitch", 16384);
+				//socket.emit("keyPress", "pitch", 32768);
 				break;
 
 			// A key = roll left
 			case 65:
 				// alert("A pressed!");
 				controlDataString(ROLL, 0);
-				//socket.emit("keyPress", "roll", 16384);
+				//socket.emit("keyPress", "roll", 32768);
 				break;
 
 			// S key = pitch up
 			case 83:
 				// alert("S pressed!");
 				controlDataString(PITCH, 0);
-				//socket.emit("keyPress", "pitch", -16384);
+				//socket.emit("keyPress", "pitch", -32768);
 				break;
 
 			// D key = roll right
 			case 68:
 				controlDataString(ROLL, 0);
 				// alert("D pressed!");
-				//socket.emit("keyPress", "roll", -16384);
+				//socket.emit("keyPress", "roll", -32768);
 				break;
 
 			default:
@@ -258,11 +258,12 @@ function addgamepad(gamepad){
 	var controller= document.getElementById('gamepads');
 	controller.appendChild(controllerView);
 	startController();
+	console.log("Started Controller");
 }
 
 function updateStatus(){
 
-	console.log("here");
+	console.log("updating Status");
 	if(navigator.webkitGetGamepads){
 		scangamepads();
 	}
@@ -410,9 +411,13 @@ function controllerAxesEvent(axes, value){
 }
 
 function sendControlData(){
+	console.log("Sending Control Data");
 	socket.emit("controlEvent", controlStringArray);
 }
 
 function startController(){
-	setInterval(updateStatus(), 3000);
+//	while(1){
+//		updateStatus();
+//		wait(3000);
+//	}
 }

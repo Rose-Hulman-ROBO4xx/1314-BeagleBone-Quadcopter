@@ -84,6 +84,7 @@ io.sockets.on('connection', function (socket) {
 		controlDataArray.forEach(function(value){
 			strToWrite = strToWrite.concat(String(value));
 		});
+		strToWrite = strToWrite.concat("\n");
 		writeToFile(strToWrite);
 	});
 
