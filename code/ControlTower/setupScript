@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "export QUAD_COPTER=~/RH_ROBO_Quadcopter/ControlTower/BeagleQuadServer.js" >> ~/.bash_profile
+
+mkfifo /tmp/BeagleQuad_ControlData.txt

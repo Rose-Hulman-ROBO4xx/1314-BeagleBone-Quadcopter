@@ -1,0 +1,11 @@
+body {
+	font-size: .8em;
+	width:80%;
+	background-color: red;
+	margin: 40px;
+}
+
+#container{
+	width:80%;
+}
+
