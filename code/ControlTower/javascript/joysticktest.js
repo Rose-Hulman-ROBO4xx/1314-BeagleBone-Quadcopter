@@ -1,4 +1,3 @@
-#!/usr/bin/node
 var joystick = new (require('joystick'))(0, 3500, 350); //install by "npm install joystick"
 
 joystick.on('axis', joystick_logger);
