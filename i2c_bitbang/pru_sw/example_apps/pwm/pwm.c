@@ -138,21 +138,23 @@ int main (void)
     pruDataMem_int[1] = 1;
     pruDataMem_int[2] = 100000;
     pruDataMem_int[3] = 100000;
+    pruDataMem_int[4] = 100000;
+    pruDataMem_int[5] = 100000;
     
     /* Execute example on PRU */
     printf("\tINFO: Executing example.\r\n");
     prussdrv_exec_program (PRU_NUM, "./pwm.bin");
     while(pruDataMem_int[1] != 0){
-	int pos1, pos2;
-	scanf("%d %d", &pos1, &pos2);
+	int pos1, pos2, pos3, pos4;
+	scanf("%d %d %d %d", &pos1, &pos2, &pos3, &pos4);
+	printf("%d %d %d %d\n", pos1, pos2, pos3, pos4);
+	pruDataMem_int[2] = pos1*1000;
+	pruDataMem_int[3] = pos2*1000;
+	pruDataMem_int[4] = pos3*1000;
+	pruDataMem_int[5] = pos4*1000;
 	if (pos1 == 0){
 		break;
 	}
-	printf("%d %d\n", pos1, pos2);
-	pruDataMem_int[2] = pos1*1000;
-	pruDataMem_int[3] = pos2*1000;
-	
-	   
     }
     /* Wait until PRU0 has finished execution */
     printf("\tINFO: Waiting for HALT command.\r\n");

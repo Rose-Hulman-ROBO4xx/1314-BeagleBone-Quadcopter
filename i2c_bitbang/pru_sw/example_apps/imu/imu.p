@@ -87,12 +87,14 @@
 #define IMU_INT_BIT_NUMBER	16
 
 #define DELAY_TIME 		50
-#define ARG_0 			R19
-#define ARG_1			R20
-#define ARG_2			R21
-#define RET_VAL_0		R22
-#define RET_VAL_1		R23
-#define RET_VAL_2		R24
+#define ARG_0 			R17
+#define ARG_1			R18
+#define ARG_2			R19
+#define ARG_3			R20
+#define RET_VAL_0		R21
+#define RET_VAL_1		R22
+#define RET_VAL_2		R23
+#define RET_VAL_3		R24
 
 
 IMU_MAIN:

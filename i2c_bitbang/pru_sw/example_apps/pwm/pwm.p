@@ -8,12 +8,6 @@
 
 #define GPIO1 0x4804c000
 #define GPIO0 0x44E07000
-//SDA_WRITE P9_11
-//SDA_READ  P9_13
-//SCL_WRITE P9_12
-//SCL_READ  P9_14
-//IMU_INT   P9_15
-
 #define GPIO_OE			0x134
 #define GPIO_DATAIN		0x138
 #define GPIO_CLEARDATAOUT 	0x190
@@ -23,16 +17,23 @@
 #define PWM_0_BIT		28
 #define PWM_1_BANK		GPIO0
 #define PWM_1_BIT		30
+#define PWM_2_BANK		GPIO1
+#define PWM_2_BIT		19
+#define PWM_3_BANK		GPIO0
+#define PWM_3_BIT		5
 
 #define DELAY_TIME		500000
 #define PRU_CONFIG		C4
 
-#define ARG_0 			R19
-#define ARG_1			R20
-#define ARG_2			R21
-#define RET_VAL_0		R22
-#define RET_VAL_1		R23
-#define RET_VAL_2		R24
+#define ARG_0 			R17
+#define ARG_1			R18
+#define ARG_2			R19
+#define ARG_3			R20
+#define RET_VAL_0		R21
+#define RET_VAL_1		R22
+#define RET_VAL_2		R23
+#define RET_VAL_3		R24
+
 
 
 PWM_MAIN:
@@ -50,6 +51,9 @@ PWM_MAIN:
 MAIN_PWM_LOOP:
 	lbco ARG_0,CONST_PRUDRAM, 8, 4
 	lbco ARG_1,CONST_PRUDRAM, 12, 4
+	lbco ARG_2,CONST_PRUDRAM, 16, 4
+	lbco ARG_3,CONST_PRUDRAM, 20, 4
+
 	call SEND_PWM_PULSE
 	call DELAY
 	
@@ -92,10 +96,16 @@ SEND_PWM_PULSE:
 	mov r2, PWM_1_BANK | GPIO_SETDATAOUT
 	sbbo r1, r2, 0, 4
 
+	mov r1,  1 << PWM_2_BIT
+	mov r2, PWM_2_BANK | GPIO_SETDATAOUT
+	sbbo r1, r2, 0, 4
 
+	mov r1,  1 << PWM_3_BIT
+	mov r2, PWM_3_BANK | GPIO_SETDATAOUT
+	sbbo r1, r2, 0, 4
 	
 	mov r0, 0	//counting variable
-	mov r3, 0b00000011 //need to clear all these channels
+	mov r3, 0b00001111 //need to clear all these channels
 PWM_PULSE_LOOP:
 	add r0, r0, 1
 	qblt SKIP_0, ARG_0, r0
@@ -118,6 +128,27 @@ SKIP_0:
 	add r0, r0, 4
 
 SKIP_1:
+	add r0, r0, 1
+	qblt SKIP_2, ARG_2, r0
+
+	mov r1,  1 << PWM_2_BIT
+	mov r2, PWM_2_BANK | GPIO_CLEARDATAOUT
+	sbbo r1, r2, 0, 4
+	clr r3, r3, 2
+	
+	add r0, r0, 4
+SKIP_2:
+	add r0, r0, 1
+	qblt SKIP_3, ARG_3, r0
+
+	mov r1,  1 << PWM_3_BIT
+	mov r2, PWM_3_BANK | GPIO_CLEARDATAOUT
+	sbbo r1, r2, 0, 4
+	clr r3, r3, 3
+	
+	add r0, r0, 4
+SKIP_3:
+
 	add r0, r0, 1
 	qbne PWM_PULSE_LOOP, r3, 0
 
