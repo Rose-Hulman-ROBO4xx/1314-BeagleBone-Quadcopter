@@ -4,16 +4,30 @@
 var PRESSED = 0;
 var UNPRESSED = 1;
 
+var TRUE = 1;
+var FALSE = 0;
+
 var FLAGS = 4;
 var YAW = 3;
 var PITCH = 2;
 var ROLL = 1;
 var THROTTLE = 0;
 
+var CONTROLLER_ROLL = 2;
+var CONTROLLER_YAW = 0;
+var CONTROLLER_PITCH = 3;
+var CONTROLLER_THROTTLE = 1;
+var CONTROLLER_STARTBUTTON = 9;
+
+var CONTROLS_ACTIVE = FALSE;
+
+var START_STATE = TRUE;
+var HOVER_STATE = FALSE;
+
 var buttonFlag = UNPRESSED;
 
 var setupAxes = false;
-var activeButtons = [0];
+var activeButtons = [0, 9];
 var axesPreVals = new Array();
 
 var socket;
@@ -61,6 +75,7 @@ function addEvent(obj, type, fn){
 function tabSwitch(newTab){
 	if(newTab == "fly_tab"){
 		document.getElementById(newTab).innerHTML = 'Flight!';
+		CONTROLS_ACTIVE = 1;
 	}
 	
 }
@@ -237,12 +252,12 @@ function addgamepad(gamepad){
 	controllerView.appendChild(controllerHeader);
 	var buttons = document.createElement("div");
 	buttons.className = "buttons";
-	for(var i in activeButtons){
+	activeButtons.forEach(function(i){
 		var button = document.createElement("span");
 		button.className = "button";
 		button.innerHTML = i;
 		buttons.appendChild(button);
-	}
+	});
 	controllerView.appendChild(buttons);
 	var axes = document.createElement("div");
 	axes.className = "axes";
@@ -260,12 +275,13 @@ function addgamepad(gamepad){
 	var controller= document.getElementById('gamepads');
 	controller.appendChild(controllerView);
 	startController();
-	console.log("Started Controller");
+//	console.log("Started Controller");
 }
 
 function updateStatus(){
+	var count = -1;
 
-	console.log("updating Status");
+	//console.log("updating Status");
 	if(navigator.webkitGetGamepads){
 		scangamepads();
 	}
@@ -273,9 +289,9 @@ function updateStatus(){
 		var controller = controllers[gamepad];
 		var d = document.getElementById("controller" + gamepad);
 		var buttons = d.getElementsByClassName("button");
-		for(var i in activeButtons){
-			console.log("buttons");
-			var b = buttons[i];
+		activeButtons.forEach(function(i){
+			count++;
+			var b = buttons[count];
 			var val = controller.buttons[i];
 			var pressed = val == 1.0;
 			if(typeof(val) == "object"){
@@ -293,25 +309,25 @@ function updateStatus(){
 			else{
 				b.className = "button";
 				controllerButtonEvent(i, val)
-				//socket.emit("controllerButtonEvent", i, val);
+				//socket.emit("controllerButtonEvent", activeButtons[i], val);
 			}
-		}
+		});
 		var axes = d.getElementsByClassName("axis");
 		//TODO: change this to show the degree of roll, pitch, yaw...
+		if(CONTROLS_ACTIVE==TRUE){
 		for(var i =0; i < controller.axes.length; i++){
 			//TODO: do this better...
-			console.log("axes");
+//			console.log("axes");
 					var a = axes[i];
 					a.innerHTML = i + ": " + controller.axes[i].toFixed(4);
 					a.setAttribute("value", controller.axes[i] + 1);
-					controllerAxesEvent(i, (a.getAttribute("value")-1)*32768);
-					axesPreVals[i] = controller.axes[i]+1;
-					controllerAxesEvent(i, (a.getAttribute("value")-1)*32768);
+					controllerAxesEvent(i, (a.getAttribute("value")-1)*-32768);
 	}
 
 	}
+	}
 	sendControlData();
-	console.log("exiting updateStatus");
+//	console.log("exiting updateStatus");
 }
 		
 
@@ -347,24 +363,24 @@ if(navigator.webkitGetGamepads){
 }
 
 function controlDataString(index, value){
-	console.log(index, value);
+//	console.log(index, value);
 	value = value.toString();
 	switch(index){
 		//TODO: implement flag control
 //		case FLAG:
-//			controlStringArray[FLAG] = value;
+//			controlStringArray[FLAG] = parseInt(value);
 //			break;
-		case YAW:
-			controlStringArray[YAW] = value;
-			break;
-		case PITCH:
-			controlStringArray[PITCH] = value;
+		case THROTTLE:
+			controlStringArray[THROTTLE] = parseInt(value);
 			break;
 		case ROLL:
-			controlStringArray[ROLL] = value;
+			controlStringArray[ROLL] = parseInt(value);
 			break;
-		case THROTTLE:
-			controlStringArray[THROTTLE] = value;
+		case PITCH:
+			controlStringArray[PITCH] = parseInt(value);
+			break;
+		case YAW:
+			controlStringArray[YAW] = parseInt(value);
 			break;
 	}
 }
@@ -372,9 +388,27 @@ function controlDataString(index, value){
 
 function controllerButtonEvent(button, value){
 	switch(button){
-		//case 0:
-			//controlDataString(FLAG, value);
-			//break;
+		case 0:
+			if(HOVER_STATE==TRUE){
+				hover();		
+				HOVER_STATE = FALSE;
+			}
+			else{
+				CONTROLS_ACTIVE = TRUE;
+				HOVER_STATE = TRUE;
+			}
+			break;
+		case 9:
+			if(START_STATE==FALSE){
+				land();
+				START_STATE=TRUE;
+			}
+			else{
+				CONTROLS_ACTIVE = TRUE;
+				START_STATE=FALSE;
+			}
+			break;
+
 		//case 6:
 		//	controlDataString(THROTTLE, value);
 		//	break;
@@ -390,28 +424,47 @@ function controllerButtonEvent(button, value){
 //TODO implement different control methods
 //	i.e. first person shooter, regular QC...etc
 function controllerAxesEvent(axes, value){
-	console.log("hereAxes");
+//	console.log("hereAxes");
 	switch(axes){
-		case 0:
+		case CONTROLLER_ROLL:
 			controlDataString(ROLL, value);
 			break;
-		case 1:
+		case CONTROLLER_PITCH:
 			controlDataString(PITCH, value);
 			break;
-		case 2:
+		case CONTROLLER_YAW:
 			controlDataString(YAW, value);
 			break;
-		case 3:
+		case CONTROLLER_THROTTLE:
 			controlDataString(THROTTLE, value);
 	}
 }
 
 function sendControlData(){
-	console.log("Sending Control Data");
+//	console.log("Sending Control Data");
 	socket.emit("controlEvent", controlStringArray);
-	console.log("leaving sendControlData");
+//	console.log("leaving sendControlData");
 }
 
 function startController(){
 setInterval(updateStatus, 100);
 }
+
+function hover(){
+	CONTROLS_ACTIVE = FALSE;
+	controlDataString(ROLL, 0);
+	controlDataString(PITCH, 0);
+	controlDataString(YAW,0);
+	sendControlData();
+}
+
+function land(){
+	CONTROLS_ACTIVE = FALSE;
+	var throttlePrev = controlStringArray[THROTTLE];
+	while(throttlePrev > 1000){
+		controlStringArray = [throttlePrev, "0", "0", "0"];
+		sendControlData();
+		throttlePrev = throttlePrev/2;
+	}
+}
+

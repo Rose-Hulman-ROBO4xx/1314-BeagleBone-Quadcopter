@@ -77,11 +77,35 @@
 	text-align: center;
 	padding-top: 5px;
 	padding-bottom: 5px;
+	padding-left: 250px;
+	padding-right: 400px;
+	height: 500px;
+}
+
+#container .content {
+	position: relative;
+	float: left;
+	height: 100%;
+	overflow: auto;
+}
+
+#parameter_frame {
+	width: 250px;
+	margin-left: -250px;
+}
+
+#streaming_frame {
+	width: 500px;
+	vertical-align: middle;
+}
+
+#control_frame {
+	width: 400px;
+	margin-right: -400px;
 }
 
 #container div {
 	border-bottom: solid 2px #9090;
-	
 }
 
 body {
@@ -113,7 +137,14 @@ ul.sub_tabs li {
 	display: inline-block;
 }
 
+#parameter_frame {
+	font-family: "Verdana", sans-serif;
+	font-size: 12px;
+}
 
+legend {
+	font-weight: bold;
+}
 
 
 
