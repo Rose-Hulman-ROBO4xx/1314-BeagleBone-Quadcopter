@@ -90,7 +90,7 @@
 #define IMU_INT_BANK		GPIO1
 #define IMU_INT_BIT_NUMBER	16
 
-#define DELAY_TIME 		500
+#define DELAY_TIME 		50
 #define ARG_0 			R19
 #define ARG_1			R20
 #define ARG_2			R21
@@ -118,21 +118,46 @@ MEMACCESSPRUDATARAM:
 	mov ARG_0.b1, 0x6B
 	mov ARG_0.b2, 0x00
 	call WRITE_BYTE
+
+	mov ARG_0.b0, 0xD0	//configure the interrupt 
+	mov ARG_0.b1, 0x37
+	mov ARG_0.b2, 0b00110000
+	call WRITE_BYTE
 	
 	mov ARG_0.b0, 0xD0 //enable the interrupt pin on data_rdy
 	mov ARG_0.b1, 0x38
-	mov ARG_0.b2, 0x00
+	mov ARG_0.b2, 0x01
 	call WRITE_BYTE	
+	
+	mov ARG_0.b0, 0xD0 //set the DLPF
+	mov ARG_0.b1, 0x1A
+	mov ARG_0.b2, 0x06
+	call WRITE_BYTE
+	
+	mov ARG_0.b0, 0xD0 //set the sample rate
+	mov ARG_0.b1, 0x19
+	mov ARG_0.b2, 0x01
+	call WRITE_BYTE
+
+	//configure tmp101
 
 	mov r5, 0
 	sbco r5, CONST_PRUDRAM, 32, 4
-	mov r4, 1000
+	mov r4, 2000
 REPEAT_MEASURE:
 	
 WAIT_FOR_DATA_TO_BE_READY:
-	//call READ_IMU_INT
-	//qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
-	sbco r5, CONST_PRUDRAM, 32, 4
+	call READ_IMU_INT
+	qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
+	
+
+	//read the tmp101
+	mov ARG_0.b0, 0x92
+	mov ARG_0.b1, 0x00
+	call READ_BYTE
+	mov r3, RET_VAL_0
+	sbco r3, CONST_PRUDRAM, 36, 4
+
 
 	mov ARG_0.b0, 0xD0
 	mov ARG_0.b1, 0x3B
@@ -204,6 +229,7 @@ WAIT_FOR_DATA_TO_BE_READY:
 	sbco r3, CONST_PRUDRAM, 4, 4
 
 	add r5, r5, 1
+	
 	qbgt REPEAT_MEASURE, r5, r4
 	
 	mov r3, 0
@@ -262,9 +288,9 @@ READ_BYTE_LOOP1:
 	call SET_SDA //gotta let the slave ack, so release sda
 	call DELAY
 	call SET_SCL //clock ack bit
-READ_BYTE_WAIT_FOR_ACK_1:
-	call READ_SDA
-	qbne READ_BYTE_WAIT_FOR_ACK_1, RET_VAL_0, 0
+//READ_BYTE_WAIT_FOR_ACK_1:
+//	call READ_SDA
+//	qbne READ_BYTE_WAIT_FOR_ACK_1, RET_VAL_0, 0
 	
 	call DELAY
 	call CLEAR_SCL
@@ -413,9 +439,9 @@ WRITE_BYTE_LOOP1:
 	call DELAY
 	call SET_SCL //clock ack bit
 
-WRITE_BYTE_WAIT_FOR_ACK_1:
-	call READ_SDA
-	qbne WRITE_BYTE_WAIT_FOR_ACK_1, RET_VAL_0, 0
+//WRITE_BYTE_WAIT_FOR_ACK_1:
+//	call READ_SDA
+//	qbne WRITE_BYTE_WAIT_FOR_ACK_1, RET_VAL_0, 0
 	
 	
 

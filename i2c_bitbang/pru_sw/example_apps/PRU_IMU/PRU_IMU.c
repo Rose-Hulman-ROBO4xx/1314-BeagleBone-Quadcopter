@@ -143,7 +143,8 @@ int main (void)
 
     pruDataMem_int[0] = 1;
     while(pruDataMem_int[0]){
-	printf("%d\n", pruDataMem_int[8]);
+	    int raw_temp = pruDataMem_int[9];
+	    printf("%d\n", raw_temp);
 	if (pruDataMem_int[1]){
 	    signed short x_a = pruDataMem_int[2];
 	    signed short y_a = pruDataMem_int[3];
