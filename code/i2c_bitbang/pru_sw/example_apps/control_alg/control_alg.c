@@ -18,10 +18,11 @@ void signal_handler(int sig){
 	pruDataMem_int[0] = 0;
 }
 
-void get_set_point(set_point_t * goal, comp_filter_t * theta_r){
+int get_set_point(set_point_t * goal, comp_filter_t * theta_r){
     static int f = NULL;
     static int num_since_last = 0;
     static int alive = 1;
+    static int armed = 0;
     if (f == NULL){
 	    f = open("asdf", O_NONBLOCK | O_RDONLY);
             if (f <=0 ){
@@ -52,20 +53,18 @@ void get_set_point(set_point_t * goal, comp_filter_t * theta_r){
 		printf("--\n");
 		fflush(stdout);
 		
-		goal->z = -goal->z*2.3;
+		goal->z = (goal->z+32000)*.5;
+		if (goal->z > 1000){
+			armed = 1;
+		} else{
+			armed = 0;
+		}
 
-		goal->roll = (goal->roll+7700);
-		if (fabs(fabs(goal->roll)-700) > 0){
-			goal->roll/=2000.0f;
-		}else{
-			goal->roll = 0;
-		}
-		goal->pitch = (goal->pitch+12700);
-		if (fabs(fabs(goal->pitch)-700) > 0){
-			goal->pitch/=-2000.0f;
-		}else{
-			goal->pitch = 0;
-		}
+		goal->roll = (goal->roll);
+		goal->roll/=-2000.0f;
+
+		goal->pitch = (goal->pitch);
+		goal->pitch/=-2000.0f;
 
 		printf("yaw + %d\n", goal->yaw);
 		goal->yaw = (goal->yaw+7700);
@@ -98,6 +97,7 @@ void get_set_point(set_point_t * goal, comp_filter_t * theta_r){
 
 
     usleep(0);
+    return armed;
 
 
 }
@@ -347,44 +347,57 @@ int main (void)
 	goal->yaw = 0;
 	while(pruDataMem_int[0] != 0){
 
-		get_set_point(goal, theta_p);
-		bias = goal->z;
-		if (bias < BIAS_MAX){
-			//bias = BIAS_MAX/(1.0f+exp(-0.01656695d*time+6.2126d));
-		} else{
-			//bias = BIAS_MAX;
-			bias = BIAS_MAX;
-		}
-		
-		get_imu_frame(imu_frame);
-		count++;
-		if (imu_frame->sample_num != count){
-			printf("Skipped %d frames\n", imu_frame->sample_num-count+1);
-			count = imu_frame->sample_num;
-		}
-
-		calibrate_imu_frame(imu_frame, calib_data);
-
-		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
-		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf, imu_frame);
-		output_pwm(next_pwm, pwm_out);
-
-/*		if ((count % 20) == 0){
+		get_imu_frame(imu_frame); //called because this basically controls our timesteps
+		if (get_set_point(goal, theta_p)){
+			bias = goal->z;
+			if (bias < BIAS_MAX){
+				//bias = BIAS_MAX/(1.0f+exp(-0.01656695d*time+6.2126d));
+			} else{
+				//bias = BIAS_MAX;
+				bias = BIAS_MAX;
+			}
 			
-			printf("bias: % 03f", bias);
-			printf(", pitch: % 03.5f, cf_pitch: % 03.5f", theta_p->th, cf->pitch);
-			printf(", roll: % 03.5f, cf_roll: % 03.5f", theta_r->th, cf->roll);
-			printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
-			printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
-			printf("I: %f\n", PID_pitch->I);
-			printf("D: %f\n", PID_pitch->D);
-			
-			printf("gyro: %f\n", (imu_frame->x_g/GYRO_MAX_RAW)*GYRO_SENSITIVITY);
+			count++;
+			if (imu_frame->sample_num != count){
+				printf("Skipped %d frames\n", imu_frame->sample_num-count+1);
+				count = imu_frame->sample_num;
+			}
+
+			calibrate_imu_frame(imu_frame, calib_data);
+
+			filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
+			calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf, imu_frame);
+			output_pwm(next_pwm, pwm_out);
+
+	/*		if ((count % 20) == 0){
+				
+				printf("bias: % 03f", bias);
+				printf(", pitch: % 03.5f, cf_pitch: % 03.5f", theta_p->th, cf->pitch);
+				printf(", roll: % 03.5f, cf_roll: % 03.5f", theta_r->th, cf->roll);
+				printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
+				printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+				printf("I: %f\n", PID_pitch->I);
+				printf("D: %f\n", PID_pitch->D);
+				
+				printf("gyro: %f\n", (imu_frame->x_g/GYRO_MAX_RAW)*GYRO_SENSITIVITY);
+			}
+	*/
+			fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+	//		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
+			time += 1;
+		} else{ // not armed
+			time = 0;
+			init_pwm(next_pwm);
+			output_pwm(next_pwm, pwm_out);
+			PID_pitch->I = 0;
+			PID_pitch->D = 0;
+			PID_roll->I = 0;
+			PID_roll->D = 0;
+			PID_yaw->I = 0;
+			PID_yaw->D = 0;
+			PID_z->I = 0;
+			PID_z->D = 0;
 		}
-*/
-		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
-//		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
-		time += 1;
 	}
 	printf("exiting...\n");
 
