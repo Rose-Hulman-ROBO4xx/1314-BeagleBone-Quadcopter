@@ -85,6 +85,10 @@ io.sockets.on('connection', function (socket) {
 	writeToFile(key+":"+value);
     });
 
+    socket.on('jotstickMoved', function (data) {
+        // pick off which value was sent via switch case and write to file
+    });
+
 
     // Boilerplate to deal with connection managing
     socket.on('disconnect', function () {
