@@ -1,7 +1,5 @@
 #include "control_alg.hp"
 #include "conventions.hp"
-#include "pwm.p"
-#include "imu.p"
 
 .struct imu_data_frame
 	.u16 x_a
@@ -39,11 +37,16 @@ CONTROL_MAIN:
 
 	call PWM_ENABLE_GPIO_AND_SET_DIRECTIONS
 	call IMU_ENABLE_GPIO_AND_SET_DIRECTIONS
-    MOV R31.b0, PRU0_ARM_INTERRUPT+16
-    
-    HALT
+	mov imu_temporary_average.x_a, 0
+	mov imu_temporary_average.y_a, 0
+	mov imu_temporary_average.z_a, 0
+
+	mov imu_temporary_average.x_g, 0
+	mov imu_temporary_average.y_g, 0
+	mov imu_temporary_average.z_g, 0
+
 	mov R6, 0
-	mov R7, 1024
+	mov R7, 4096
 
 GET_AVERAGE_IMU_LOOP:
 	call GET_IMU_DATA
@@ -56,12 +59,19 @@ GET_AVERAGE_IMU_LOOP:
 	add R6, R6, 1
 	QBNE GET_AVERAGE_IMU_LOOP, R6, R7
 
-	lsr imu_avg.x_a, imu_temporary_average.x_a, 10
-	lsr imu_avg.y_a, imu_temporary_average.y_a, 10
-	lsr imu_avg.z_a, imu_temporary_average.z_a, 10
-	lsr imu_avg.x_g, imu_temporary_average.x_g, 10
-	lsr imu_avg.y_g, imu_temporary_average.y_g, 10
-	lsr imu_avg.z_g, imu_temporary_average.z_g, 10
+	lsr imu_avg.x_a, imu_temporary_average.x_a, 12
+	lsr imu_avg.y_a, imu_temporary_average.y_a, 12
+	lsr imu_avg.z_a, imu_temporary_average.z_a, 12
+	lsr imu_avg.x_g, imu_temporary_average.x_g, 12
+	lsr imu_avg.y_g, imu_temporary_average.y_g, 12
+	lsr imu_avg.z_g, imu_temporary_average.z_g, 12
+
+	lsr imu_temporary_average.x_a, imu_temporary_average.x_a, 12
+	lsr imu_temporary_average.y_a, imu_temporary_average.y_a, 12
+	lsr imu_temporary_average.z_a, imu_temporary_average.z_a, 12
+	lsr imu_temporary_average.x_g, imu_temporary_average.x_g, 12
+	lsr imu_temporary_average.y_g, imu_temporary_average.y_g, 12
+	lsr imu_temporary_average.z_g, imu_temporary_average.z_g, 12
 	
 
 	SBCO      imu_temporary_average, CONST_PRUDRAM, 8, 24
@@ -73,3 +83,5 @@ GET_AVERAGE_IMU_LOOP:
     HALT
 //------------------------------------------------------------
 
+#include "pwm.p"
+#include "imu.p"

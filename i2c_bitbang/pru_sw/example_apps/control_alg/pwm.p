@@ -1,4 +1,4 @@
-#include "pwm.hp"
+//#include "pwm.hp"
 #include "conventions.hp"
 
 
@@ -100,6 +100,9 @@ SKIP_3:
 
 //--------------------------------------------------
 PWM_ENABLE_GPIO_AND_SET_DIRECTIONS:
+	sub SP_reg, SP_reg, 4
+	sbco RA_REG, CONST_PRUDRAM, SP_reg, 4
+	
 	sub SP_reg, SP_reg, 8 //push r0 and r1 onto stack
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 
@@ -120,6 +123,10 @@ PWM_ENABLE_GPIO_AND_SET_DIRECTIONS:
 	
 	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
 	add SP_reg, SP_reg, 8
+
+	lbco RA_REG, CONST_PRUDRAM, SP_reg, 4
+	add SP_reg, SP_reg, 4
+
 	RET
 
 
