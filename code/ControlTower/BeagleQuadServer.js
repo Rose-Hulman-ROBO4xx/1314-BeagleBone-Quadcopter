@@ -71,7 +71,7 @@ io.sockets.on('connection', function (socket) {
         Server side callback for our key bindings
     */
     socket.on('keyPress', function (key, value) {
-	//console.log("CONSOLE LOG... " + key + ":"+value);
+console.log("CONSOLE LOG... " + key + ":"+value);
 	writeToFile(key+":"+value);
     });
 
