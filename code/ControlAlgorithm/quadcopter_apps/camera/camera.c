@@ -33,93 +33,93 @@ void signal_handler(int sig){
 }
 
 void initialize_pru(){
-    unsigned int ret;
-    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+	unsigned int ret;
+	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 
-    prussdrv_init ();
-    /* Open PRU Interrupt */
-    if (PRU_NUM == 0){
-        ret = prussdrv_open(PRU_EVTOUT_0);
-    }
-    if (PRU_NUM == 1){
-        ret = prussdrv_open(PRU_EVTOUT_1);
-    }
-    if (ret)
-    {
-        printf("prussdrv_open open failed\n");
-        exit(ret);
-    }
-    
-    /* Get the interrupt initialized */
-    prussdrv_pruintc_init(&pruss_intc_initdata);
+	prussdrv_init ();
+	/* Open PRU Interrupt */
+	if (PRU_NUM == 0){
+		ret = prussdrv_open(PRU_EVTOUT_0);
+	}
+	if (PRU_NUM == 1){
+		ret = prussdrv_open(PRU_EVTOUT_1);
+	}
+	if (ret)
+	{
+		printf("prussdrv_open open failed\n");
+		exit(ret);
+	}
 
-    //Initialize pointer to PRU data memory
-    if (PRU_NUM == 0)
-    {
-      prussdrv_map_prumem (PRUSS0_PRU0_DATARAM, &pruDataMem);
-    }
-    else if (PRU_NUM == 1)
-    {
-      prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, &pruDataMem);
-    }
-    pruDataMem_int = (volatile signed int*) pruDataMem;
+	/* Get the interrupt initialized */
+	prussdrv_pruintc_init(&pruss_intc_initdata);
 
-    //initialize external ram:
-    //
-    int mem_fd = open("/dev/mem", O_RDWR);
-    if (mem_fd < 0){
-	printf("couldn't open /dev/mem\n");
-	exit(-1);
-    }
+	//Initialize pointer to PRU data memory
+	if (PRU_NUM == 0)
+	{
+		prussdrv_map_prumem (PRUSS0_PRU0_DATARAM, &pruDataMem);
+	}
+	else if (PRU_NUM == 1)
+	{
+		prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, &pruDataMem);
+	}
+	pruDataMem_int = (volatile signed int*) pruDataMem;
 
-    pru1_ddr= (uint8_t*)mmap(0, PRU_DDR_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd, PRU1_DDR);
-    if (pru1_ddr == NULL){
-        printf("couldn't map pru1 ddr\n");
-        exit(-1);
-    }
-    
-    
+	//initialize external ram:
+	//
+	int mem_fd = open("/dev/mem", O_RDWR);
+	if (mem_fd < 0){
+		printf("couldn't open /dev/mem\n");
+		exit(-1);
+	}
 
-    pruDataMem_int[0] = 1;
-    pruDataMem_int[1] = 0;
-    pruDataMem_int[2] = PRU1_DDR;
-    pruDataMem_int[3] = PRU1_DDR+320*240*2;
-    pruDataMem_int[4] = PRU1_DDR+320*240*4;
-    pruDataMem_int[5] = PRU1_DDR+320*240*6;
-    pruDataMem_int[6] = PRU1_DDR+320*240*8;
-    printf("WE DIDN'T ALL DIE!\n");
-    fflush(stdout);
-    
+	pru1_ddr= (uint8_t*)mmap(0, PRU_DDR_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd, PRU1_DDR);
+	if (pru1_ddr == NULL){
+		printf("couldn't map pru1 ddr\n");
+		exit(-1);
+	}
+
+
+
+	pruDataMem_int[0] = 1;
+	pruDataMem_int[1] = 0;
+	pruDataMem_int[2] = PRU1_DDR;
+	pruDataMem_int[3] = PRU1_DDR+320*240*2;
+	pruDataMem_int[4] = PRU1_DDR+320*240*4;
+	pruDataMem_int[5] = PRU1_DDR+320*240*6;
+	pruDataMem_int[6] = PRU1_DDR+320*240*8;
+	printf("WE DIDN'T ALL DIE!\n");
+	fflush(stdout);
+
 }
 void start_pru(){
-    prussdrv_exec_program (PRU_NUM, PRU_FILE_NAME);
-    pruDataMem_int[0] = 1;
+	prussdrv_exec_program (PRU_NUM, PRU_FILE_NAME);
+	pruDataMem_int[0] = 1;
 }
 
 
 void uninitialize_pru(){
-    pruDataMem_int[0] = 0;
+	pruDataMem_int[0] = 0;
 
-    /* Wait until PRU0 has finished execution */
-    printf("\tINFO: Waiting for HALT command.\r\n");
-    if (PRU_NUM == 0){
-        prussdrv_pru_wait_event (PRU_EVTOUT_0);
-    }
-    if (PRU_NUM == 1){
-        prussdrv_pru_wait_event (PRU_EVTOUT_1);
-    }
+	/* Wait until PRU0 has finished execution */
+	printf("\tINFO: Waiting for HALT command.\r\n");
+	if (PRU_NUM == 0){
+		prussdrv_pru_wait_event (PRU_EVTOUT_0);
+	}
+	if (PRU_NUM == 1){
+		prussdrv_pru_wait_event (PRU_EVTOUT_1);
+	}
 
-    printf("\tINFO: PRU completed transfer.\r\n");
-    if (PRU_NUM == 0){
-        prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
-    }
-    if (PRU_NUM == 1){
-        prussdrv_pru_clear_event (PRU1_ARM_INTERRUPT);
-    }
+	printf("\tINFO: PRU completed transfer.\r\n");
+	if (PRU_NUM == 0){
+		prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
+	}
+	if (PRU_NUM == 1){
+		prussdrv_pru_clear_event (PRU1_ARM_INTERRUPT);
+	}
 
 
 
-    /* Disable PRU and close memory mapping*/
+	/* Disable PRU and close memory mapping*/
 
 }
 int main (int argc, char ** argv)
@@ -136,7 +136,7 @@ int main (int argc, char ** argv)
 		fprintf(stderr, "Failed to open image output file");
 		exit(-1);
 	}
-	
+
 	const char  *version = FreeImage_GetVersion();
 	printf("Freeimage version %s\n", version);
 
@@ -154,23 +154,25 @@ int main (int argc, char ** argv)
 
 	BYTE * bits = FreeImage_GetBits(dib);
 	FILE * fp = fopen("image.data", "rb");
-	char filename[] = "/tmp/quadtempfs/latest_image.bmp";
+	char filename[] = "/root/1314-BeagleBone-Quadcopter/code/ControlTower/ramfs/latest_image.bmp";
 	int i = 0;
 
 	for (i = 0; i < num_frames; i++){
 		while(i==pruDataMem_int[100]){usleep(100000);}
 		int buffer = pruDataMem_int[1];
 		printf("%d buffer=%d\n", pruDataMem_int[100], buffer);
-		memcpy(bits, pru1_ddr+buffer*320*240*2, 320*203*2);
-		FreeImage_Save(FIF_BMP, dib, filename,0);
+		if (i%10==0){
+			memcpy(bits, pru1_ddr+buffer*320*240*2, 320*203*2);
+			FreeImage_Save(FIF_BMP, dib, filename,0);
+		}
 	}
 	uninitialize_pru();
 	fflush(image_data);
 	printf("%d\n", ((volatile uint8_t *)pru1_ddr)[0]);
 	fclose(image_data);
 
-    prussdrv_pru_disable (PRU_NUM);
-    prussdrv_exit ();
+	prussdrv_pru_disable (PRU_NUM);
+	prussdrv_exit ();
 
 	return(0);
 }

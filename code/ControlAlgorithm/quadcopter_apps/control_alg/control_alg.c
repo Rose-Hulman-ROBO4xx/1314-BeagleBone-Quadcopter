@@ -33,7 +33,7 @@ int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t
 	static double z_goal = 0;
 	static int zero_throttle_seen = 0;
 	if (f == 0){
-		f = open("/tmp/BeagleQuad_ControlFifo.txt", O_NONBLOCK | O_RDONLY);
+		f = open("/tmp/quadtempfs/BeagleQuad_ControlFifo.txt", O_NONBLOCK | O_RDONLY);
 		if (f <=0 ){
 			printf("couldn't open control file\n");
 			pruDataMem_int[0] = 0;

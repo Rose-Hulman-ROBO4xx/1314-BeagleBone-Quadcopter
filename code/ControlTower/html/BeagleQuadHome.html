@@ -15,19 +15,21 @@
 	<script language="Javascript">
 		function refresh(node)
 		{
-		   var times = 100; // gap in Milli Seconds;
+		   var times = 1/30.0; // gap in Milli Seconds;
 
-		   (function startRefresh()
-		   {
+		   
+			setInterval(function(){
 			  var address;
-			  if(node.src.indexOf('?')>-1)
+			  if(node.src.indexOf('?')>-1){
 			   address = node.src.split('?')[0];
-			  else 
+			  }
+			  else{
 			   address = node.src;
+			  }
 			  node.src = address+"?time="+new Date().getTime();
-
-			  setTimeout(startRefresh,times);
-		   })();
+			}, times);
+		
+	
 
 		}
 
@@ -35,6 +37,7 @@
 		{
 		  var node = document.getElementById('stream_img');
 		  refresh(node);
+		  console.log("FUCK");
 		}
 	</script>
 </head>
@@ -81,7 +84,7 @@
 			</form>
 		</div>
 		<div id="streaming_frame" class="content">
-			<img src="/tmp/quadtempfs/latest_image.bmp" id="stream_img">
+			<img src="ramfs/latest_image.bmp" id="stream_img">
 			<!--<object data=http://192.168.7.2:8080/stream_simple.html width="500" height="400"> 
 			<embed src=http://192.168.7.2:8080/stream_simple.html width="500" height="400"> 
 			</embed> <br>Error: Embedded data could not be displayed. </object>-->

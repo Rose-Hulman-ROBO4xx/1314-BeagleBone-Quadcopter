@@ -327,7 +327,7 @@ function updateStatus(){
 	}
 //	}
 	sendControlData();
-//	console.log("exiting updateStatus");
+	console.log("exiting updateStatus");
 }
 		
 

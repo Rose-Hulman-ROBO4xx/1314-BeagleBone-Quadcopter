@@ -13,3 +13,7 @@ umount /tmp/quadtempfs
 rmdir /tmp/quadtempfs
 mkdir /tmp/quadtempfs
 mount -t tmpfs -o size=20m tmpfs /tmp/quadtempfs
+mkdir /root/1314-BeagleBone-Quadcopter/code/ControlTower/ramfs
+
+mount -t tmpfs -o size=20m tmpfs /root/1314-BeagleBone-Quadcopter/code/ControlTower/ramfs
+echo `pwd`

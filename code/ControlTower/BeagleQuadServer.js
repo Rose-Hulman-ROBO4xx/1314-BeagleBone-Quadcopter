@@ -14,7 +14,7 @@ var port = 1337, // Port to listen on
     connectCount = 0,	// Number of connections to server
     errCount = 0;	// Counts the AIN errors.
 
-var controlDataFile = '/tmp/BeagleQuad_ControlFifo.txt';
+var controlDataFile = '/tmp/quadtempfs/BeagleQuad_ControlFifo.txt';
 
 child_process.exec("rm "+controlDataFile)
 child_process.exec("mkfifo "+ controlDataFile)
