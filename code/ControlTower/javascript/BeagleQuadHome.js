@@ -1,6 +1,17 @@
 // Boilerplate code for socket io stuff
 "use strict";
 
+var PRESSED = 0;
+var UNPRESSED = 1;
+
+var buttonFlag = UNPRESSED;
+
+var setupAxes = false;
+var activeButtons = [0];
+
+var axesPreVals = new Array();
+var controlData = new Array();
+
 var socket;
 var firstconnect = true;
 var init_home=1;
@@ -26,6 +37,7 @@ Our code
 */
 
 //**** WEB PAGE SETUP *****//
+//FIXME
 function dynamicLayout(){
 	var browserWidth = getBrowserWidth();
 	if(browserWidth < 750){
@@ -39,6 +51,7 @@ function dynamicLayout(){
 	}
 }
 
+//FIXME
 function getBrowserWidth(){
 	if(window.innerWidth){
 		return window.innerWidth;
@@ -74,6 +87,7 @@ addEvent(window, 'load', dynamicLayout);
 addEvent(window, 'resize', dynamicLayout);
 
 //CSS style sheet selection
+//TODO implement
 function changeLayout(layout){
        ;
 }       
@@ -84,13 +98,9 @@ function tabSwitch(newTab){
 		document.getElementById('home_images').style.display = 'none';
 		init_home=0;
 	}
-
-
-	//TODO 
-	//1) Make this so that there are only one set of tabs that are initially not displayed
-	//2) Make those tabs change inner text. Ie: opensource --> instructions
-	//3) Make the reference links of each point to the appropriate place. opensource links to opensource location
-
+	//TODO: clean this up...
+	//	only want FLY main tab
+	//	want 2 sub tabs [instructions, build]
 	var buildTabs = ["opensource_tab", "forum_tab", "purchase_tab"];
 	var flightTabs = ["instructions_tab", "hud_tab", "diagnostics_tab"];
 	if(newTab == "fly_tab"){
@@ -108,7 +118,6 @@ function tabSwitch(newTab){
 	else if(newTab == "build_tab"){
 		document.getElementById(newTab).innerHTML = 'Building!';
 		document.getElementById(newTab).className = 'active';
-//		socket.emit('close');
 		document.getElementById('fly_tab').innerHTML = 'Fly';
 		document.getElementById('fly_tab').className = 'inactive';
 		buildTabs.forEach(function(entry){
@@ -119,12 +128,16 @@ function tabSwitch(newTab){
 		});	
 	}
 
-		
+	
 }
 
 
 // Handle key bindings for quadcopter control
 // http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
+// TODO: tie these in with the update CSS
+// 		could modularize with the controller CSS updating code
+// TODO: remove magic numbers
+// 		standardize JSON requesting
 document.onkeydown = function(e) {
 	if(document.getElementById('fly_tab').className == 'active'){
 		e = e || window.event;
@@ -132,49 +145,49 @@ document.onkeydown = function(e) {
 			// Left arrow = yaw left
 			case 37:
 				// alert("Left pressed!");
-				socket.emit("keyPress", "yaw", -10);
+				socket.emit("keyPress", "yaw", -16384);
 				break;
 
 			// Up arrow = throttle up
 			case 38:
 				// alert("Up pressed!");
-				socket.emit("keyPress","up", 20);
+				socket.emit("keyPress","up", 16384);
 				break;
 
 			// Right arrow = yaw right
 			case 39:
 				// alert("Right pressed!");
-				socket.emit("keyPress", "yaw" ,10);
+				socket.emit("keyPress", "yaw" ,16384);
 				break;
 
 			// Down arrow = throttle down
 			case 40:
 				// alert("Down pressed!");
-				socket.emit("keyPress", "up", -20);
+				socket.emit("keyPress", "up", -16384);
 				break;
 
 			// W key = pitch down
 			case 87:
 				// alert("W pressed!");
-				socket.emit("keyPress", "pitch", -5);
+				socket.emit("keyPress", "pitch", -16384);
 				break;
 
 			// A key = roll left
 			case 65:
 				// alert("A pressed!");
-				socket.emit("keyPress", "roll", -5);
+				socket.emit("keyPress", "roll", -16384);
 				break;
 
 			// S key = pitch up
 			case 83:
 				// alert("S pressed!");
-				socket.emit("keyPress", "pitch", 5);
+				socket.emit("keyPress", "pitch", 16384);
 				break;
 
 			// D key = roll right
 			case 68:
 				// alert("D pressed!");
-				socket.emit("keyPress", "roll", 5);
+				socket.emit("keyPress", "roll", 16384);
 				break;
 
 			default:
@@ -192,11 +205,13 @@ var rAF = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame 
 
 function connecthandler(e){
 	if(document.getElementById('fly_tab').className == 'active'){
+		//TODO: add socket emit call to start the quadcopter
 		addgamepad(e.gamepad);
 	}
 }
 
 function addgamepad(gamepad){
+
 	controllers[gamepad.index] = gamepad;
 	var controllerView = document.createElement("div");
 	controllerView.setAttribute("id", "controller" + gamepad.index);
@@ -205,7 +220,7 @@ function addgamepad(gamepad){
 	controllerView.appendChild(controllerHeader);
 	var buttons = document.createElement("div");
 	buttons.className = "buttons";
-	for(var i =0; i<gamepad.buttons.length; i++){
+	for(var i in activeButtons){
 		var button = document.createElement("span");
 		button.className = "button";
 		button.innerHTML = i;
@@ -214,6 +229,7 @@ function addgamepad(gamepad){
 	controllerView.appendChild(buttons);
 	var axes = document.createElement("div");
 	axes.className = "axes";
+	//TODO: pretty this CSS to show pitch, yaw, roll
 	for(var i=0; i<gamepad.axes.length; i++){
 		var axis = document.createElement("progress");
 		axis.className = "axis";
@@ -237,7 +253,7 @@ function updateStatus(){
 		var controller = controllers[gamepad];
 		var d = document.getElementById("controller" + gamepad);
 		var buttons = d.getElementsByClassName("button");
-		for(var i=0; i<controller.buttons.length; i++){
+		for(var i in activeButtons){
 			var b = buttons[i];
 			var val = controller.buttons[i];
 			var pressed = val == 1.0;
@@ -246,8 +262,19 @@ function updateStatus(){
 				val = val.value;
 			}
 			if(pressed){
-				b.className = "button pressed";
-				socket.emit("controllerButtonEvent", i, val);
+//TODO: make the buttonFlag a toggle switch
+//TODO: make a button wait till not pressed clause
+				if(i == 1){
+					if(buttonFlag == PRESSED){
+						buttonFlag = UNPRESSED;
+					}
+					else{
+						buttonFlag = PRESSED;
+					}
+				}
+
+					b.className = "button pressed";
+					socket.emit("controllerButtonEvent", i, val);
 			}
 			else{
 				b.className = "button";
@@ -255,15 +282,32 @@ function updateStatus(){
 			}
 		}
 		var axes = d.getElementsByClassName("axis");
+		//TODO: change this to show the degree of roll, pitch, yaw...
 		for(var i =0; i < controller.axes.length; i++){
-			var a = axes[i];
-			a.innerHTML = i + ": " + controller.axes[i].toFixed(4);
-			a.setAttribute("value", controller.axes[i] + 1);
-			socket.emit("controllerAxesEvent", i, (a.getAttribute("value")-1)*32768);
+			//TODO: do this better...
+			if(setupAxes == false){
+				setupAxes = true;
+				for(var i = 0; i < controller.axes.length; i++){
+					axesPreVals[i] = 0;
+				}
+			}
+			if(buttonFlag == UNPRESSED){
+				if(Math.abs(axesPreVals[i] - controller.axes[i]+1)> 600){
+					var a = axes[i];
+					a.innerHTML = i + ": " + controller.axes[i].toFixed(4);
+					a.setAttribute("value", controller.axes[i] + 1);
+					socket.emit("controllerAxesEvent", i, (a.getAttribute("value")-1)*32768);
+					axesPreVals[i] = controller.axes[i]+1;
+				}
+			}
+			else{
+				socket.emit("controllerAxesEvent", i, 0);
 		}
 	}
 	rAF(updateStatus_withTimeOut);
+	}
 }
+		
 
 function scangamepads(){
 	if(document.getElementById('fly_tab').className == 'active'){
@@ -301,3 +345,16 @@ if(navigator.webkitGetGamepads){
 function updateStatus_withTimeOut(){
 	setTimeout(updateStatus, 1000);
 }
+
+function controlDataString(index, value){
+	var subStr;
+	switch(index){
+		case 0:
+			subStr = 'Hove Mode';
+			break;
+		case 6:
+			subStr = '';
+			break;
+		case 7:
+			subStr = ''
+
