@@ -3,7 +3,7 @@
 #define PWM_1_ADDRESS 10
 #define PWM_2_ADDRESS 11
 #define PWM_3_ADDRESS 8
-#define ALPHA		.95
+#define ALPHA		.9
 #define BETA		(1-ALPHA)
 #define G		2048
 #define AM33XX
@@ -20,21 +20,21 @@
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
-#define P_DEF		18 // 10
-#define I_DEF		0  // 5	
-#define D_DEF		0  // 7
+#define P_DEF		20 // 10
+#define I_DEF		15  // 5	
+#define D_DEF		20  // 7
 
-#define BIAS0 0.0f
-#define BIAS1 0.0f
-#define BIAS2 0.0f
-#define BIAS3 0.0f
+#define BIAS0 20000.0f
+#define BIAS1 20000.0f
+#define BIAS2 20000.0f
+#define BIAS3 20000.0f
 
 #define MULT0 1.00f
 #define MULT1 1.00f
 #define MULT2 1.00f
 #define MULT3 1.00f
 
-#define BIAS_MAX 25000 //50000
+#define BIAS_MAX 10000 //50000
 
 typedef struct imu_data_t{
 	double x_a;

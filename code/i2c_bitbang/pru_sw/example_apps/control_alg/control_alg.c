@@ -13,7 +13,7 @@ void signal_handler(int sig){
 }
 
 void get_set_point(set_point_t * goal){
-	goal->pitch = 0;
+	goal->pitch = 30;
 	goal->roll = 0;
 	goal->yaw = 0;
 	goal->z = 0;
@@ -213,12 +213,11 @@ int main (void)
 	} else{
 		calib_data = malloc(sizeof(imu_data_t));
 		fscanf(calib_file, "%lf,%lf,%lf,%lf,%lf,%lf\n", &(calib_data->x_a), &(calib_data->y_a), &(calib_data->z_a), &(calib_data->x_g), &(calib_data->y_g), &(calib_data->z_g));
-		printf("cal data: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
+//		printf("cal data: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 		fclose(calib_file);
 	}
 	// P,I,D values should probably be different between the different loops (Mike)
-	// They were coded like this because we have no idea what they will actually be until we have a quad to test with.  At that time, we will start playing with the values (chris)
-	init_PID(PID_pitch, P_DEF, I_DEF, D_DEF);
+	init_PID(PID_pitch, P_DEF+1, I_DEF, D_DEF);
 	init_PID(PID_roll, P_DEF, I_DEF, D_DEF);
 	init_PID(PID_yaw, P_DEF, I_DEF, D_DEF);
 	init_PID(PID_z, P_DEF, I_DEF, D_DEF);
@@ -226,9 +225,6 @@ int main (void)
 
         signal(SIGINT, signal_handler);
 	printf("check calibration data for sanity: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
-	
-	uninitialize_pru();
-	exit(-1);
 	
 	*z_pos = 0;
 	*z_vel = 0;
@@ -246,16 +242,14 @@ int main (void)
 		if (bias < BIAS_MAX){
 			bias += 5;
 		}
-		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
-		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
+		
 		get_imu_frame(imu_frame);
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
 		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf);
 		output_pwm(next_pwm, pwm_out);
 
-		if (count == 500){
-			//printf("PID working\n");
+		if (count == 20){
 			printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 			count = 0;
 		}
@@ -314,9 +308,11 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	cf->roll = d_roll;
 	cf->pitch = d_pitch;
 	cf->yaw = d_yaw;
+	
 	d_z = 0;//FIXME
 	d_yaw = 0;
-	d_roll = 0;
+	// d_roll = 0;
+	d_pitch = 0;
 
 	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN;
 	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN;
