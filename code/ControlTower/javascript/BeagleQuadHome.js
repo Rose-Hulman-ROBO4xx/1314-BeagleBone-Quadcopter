@@ -36,7 +36,6 @@ function disconnect() {
 }
 
 connect();
-
 /*
 Our code
 */
@@ -227,6 +226,9 @@ function connecthandler(e){
 }
 
 function addgamepad(gamepad){
+	if(gamepad.id.indexOf('Controller') < 0){
+		return;
+	}
 	controllers[gamepad.index] = gamepad;
 	var controllerView = document.createElement("div");
 	controllerView.setAttribute("id", "controller" + gamepad.index);
@@ -299,24 +301,17 @@ function updateStatus(){
 		for(var i =0; i < controller.axes.length; i++){
 			//TODO: do this better...
 			console.log("axes");
-			if(setupAxes == false){
-				setupAxes = true;
-				for(var i = 0; i < controller.axes.length; i++){
-					axesPreVals[i] = 0;
-				}
-			}
-			if(Math.abs(axesPreVals[i] - controller.axes[i]+1)> 600){
 					var a = axes[i];
 					a.innerHTML = i + ": " + controller.axes[i].toFixed(4);
 					a.setAttribute("value", controller.axes[i] + 1);
 					controllerAxesEvent(i, (a.getAttribute("value")-1)*32768);
-					//socket.emit("controllerAxesEvent", i, (a.getAttribute("value")-1)*32768);
 					axesPreVals[i] = controller.axes[i]+1;
-			}
+					controllerAxesEvent(i, (a.getAttribute("value")-1)*32768);
 	}
 
 	}
 	sendControlData();
+	console.log("exiting updateStatus");
 }
 		
 
@@ -413,11 +408,9 @@ function controllerAxesEvent(axes, value){
 function sendControlData(){
 	console.log("Sending Control Data");
 	socket.emit("controlEvent", controlStringArray);
+	console.log("leaving sendControlData");
 }
 
 function startController(){
-//	while(1){
-//		updateStatus();
-//		wait(3000);
-//	}
+setInterval(updateStatus, 100);
 }
