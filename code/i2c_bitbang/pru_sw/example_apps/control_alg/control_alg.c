@@ -4,111 +4,10 @@
 #include <pruss_intc_mapping.h>
 #include <math.h>
 #include <signal.h>
-#define PRU_NUM 	0
-#define PWM_0_ADDRESS 9
-#define PWM_1_ADDRESS 10
-#define PWM_2_ADDRESS 11
-#define PWM_3_ADDRESS 8
-#define ALPHA		.99
-#define BETA		(1-ALPHA)
-#define G		2048
-#define AM33XX
-#define CALIBRATION_SAMPLES 256
-#define PI 3.141592653589793238462643383279502884197169399375105
-#define RAD_TO_DEG	57.2957795f
-#define DT		.005f
-#define PWM_MIN		117000//110000
-#define PWM_MAX		170000//160000
-#define MIN(a,b)	(a<b ? a : b)
-#define MAX(a,b)	(a>b ? a : b)
-#define BIAS_INCREASE_RATE 10
-#define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
-#define GYRO_MAX_RAW	32768 //maximum raw output of gyro
-
-#define P_DEF		200//20
-#define I_DEF		0
-#define D_DEF		0
-
-#define BIAS0 0.0f//20000.0f
-#define BIAS1 0.0f//20000.0f
-#define BIAS2 0.0f//20000.0f
-#define BIAS3 0.0f//20000.0f
-
-#define MULT0 1.00f
-#define MULT1 1.00f
-#define MULT2 1.00f
-#define MULT3 1.00f
-
-#define BIAS_MAX 50000
+#include "control_alg.h"
 
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
-
-
-
-typedef struct imu_data_t{
-	double x_a;
-	double y_a;
-	double z_a;
-	double x_g;
-	double y_g;
-	double z_g;
-	int sample_num;
-	
-}imu_data_t;
-
-typedef struct comp_filter_t {
-	double alpha;
-	double th;
-	double beta;
-	double g;
-} comp_filter_t;
-
-
-typedef struct pru_pwm_frame_t{
-	volatile int* zero;
-	volatile int* one;
-	volatile int* two;
-	volatile int* three;
-} pru_pwm_frame_t;
-
-typedef struct pwm_frame_t{
-	int zero;
-	int one;
-	int two;
-	int three;
-} pwm_frame_t;
-
-typedef struct PID_t{
-	double kP;
-	double kI;
-	double kD;
-	double I;
-	double D;
-} PID_t;
-
-typedef struct set_point_t{
-	double pitch;
-	double roll;
-	double yaw;
-	double z;
-} set_point_t;
-
-void calibrate_imu_frame(imu_data_t * imu_frame, imu_data_t * calib_data);
-void filter_loop(imu_data_t * imu_frame, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel);
-void init_filter(comp_filter_t * comp_filter, double alpha, double beta, double g);
-void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gyro, double dt);
-void get_imu_frame(imu_data_t * imu_frame);
-pru_pwm_frame_t * get_pwm_pointer();
-void initialize_pru();
-void start_pru();
-void uninitialize_pru();
-imu_data_t * get_calibration_data();
-void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf);
-void init_PID(PID_t * PID_x, double kP, double kI, double kD);
-void get_set_point(set_point_t * goal);
-double PID_loop(double goal, PID_t * PID_x, double value);
-void signal_handler(int sig);
 
 void signal_handler(int sig){
 	pruDataMem_int[0] = 0;
@@ -323,22 +222,35 @@ int main (void)
 
 	
 	int bias = 0;
+	int count = 0;
 	while(pruDataMem_int[0] != 0){
+		
 		if (bias < BIAS_MAX){
 			bias += BIAS_INCREASE_RATE;
 		} else{
-			printf("bias maxed out\n");
+			//printf("bias maxed out\n");
 		}
-		printf("herping\n");
+
+		/*
+		printf("herp\n");
+		*/
+
 		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
 		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
+		
 		get_imu_frame(imu_frame);
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
 		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf);
 		output_pwm(next_pwm, pwm_out);
-		
-	//	printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+
+		if (count == 500){
+			//printf("PID working\n");
+			printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+			count = 0;
+		}
+		count++;
+
 		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 //		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 	}
@@ -394,7 +306,9 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	cf->yaw = d_yaw;
 	
 	d_z = 0;//FIXME
-	
+	d_yaw = 0;
+	d_roll = 0;
+
 	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN;
 	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN;
 	next_pwm->two = -d_pitch - d_roll + d_yaw - d_z + PWM_MIN;
@@ -421,6 +335,7 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 	D = PID_x->kD*((delta_error - PID_x->D) / DT);
 	PID_x->D = delta_error;
 
+	//printf("PID: % 3.5f\n", P+I+D);
 	return P + I + D;
 }
 
