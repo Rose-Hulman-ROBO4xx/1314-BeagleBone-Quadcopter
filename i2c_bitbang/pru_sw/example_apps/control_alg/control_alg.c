@@ -60,7 +60,7 @@
 *****************************************************************************/
 
 #include <stdio.h>
-#include <stdlib.h>
+
 // Driver header file
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
@@ -105,8 +105,8 @@ static unsigned short LOCAL_examplePassed ( unsigned short pruNum );
 * Global Variable Definitions                                                *
 *****************************************************************************/
 
-static void *pruDataMem;
-static unsigned int *pruDataMem_int;
+volatile static void *pruDataMem;
+volatile static unsigned int *pruDataMem_int;
 
 /*****************************************************************************
 * Global Function Definitions                                                *
@@ -135,42 +135,27 @@ int main (void)
     /* Initialize example */
     printf("\tINFO: Initializing example.\r\n");
     LOCAL_exampleInit(PRU_NUM);
-    pruDataMem_int[1] = 1;
-    pruDataMem_int[2] = 100000;
-    pruDataMem_int[3] = 100000;
-    pruDataMem_int[4] = 100000;
-    pruDataMem_int[5] = 100000;
     
     /* Execute example on PRU */
     printf("\tINFO: Executing example.\r\n");
-    prussdrv_exec_program (PRU_NUM, "./pwm.bin");
-    while(pruDataMem_int[1] != 0){
-	int pos1, pos2, pos3, pos4;
-	scanf("%d %d %d %d", &pos1, &pos2, &pos3, &pos4);
-	printf("%d %d %d %d\n", pos1, pos2, pos3, pos4);
-	pruDataMem_int[2] = pos1*1000;
-	pruDataMem_int[3] = pos2*1000;
-	pruDataMem_int[4] = pos3*1000;
-	pruDataMem_int[5] = pos4*1000;
-	if (pos1 == 0){
-		break;
-	}
-    }
+    prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
+
+    
     /* Wait until PRU0 has finished execution */
     printf("\tINFO: Waiting for HALT command.\r\n");
     prussdrv_pru_wait_event (PRU_EVTOUT_0);
+
+    signed short x_a = pruDataMem_int[2];
+    signed short y_a = pruDataMem_int[3];
+    signed short z_a = pruDataMem_int[4];
+    signed short x_g = pruDataMem_int[5];
+    signed short y_g = pruDataMem_int[6];
+    signed short z_g = pruDataMem_int[7];
+    printf("%d,%d,%d,%d,%d,%d\n", x_a, y_a, z_a, x_g, y_g, z_g);
+
+
     printf("\tINFO: PRU completed transfer.\r\n");
     prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
-
-    /* Check if example passed */
-    if ( LOCAL_examplePassed(PRU_NUM) )
-    {
-        printf("INFO: Example executed succesfully.\r\n");
-    }
-    else
-    {
-        printf("INFO: Example failed.\r\n");
-    }
 
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable (PRU_NUM);
@@ -197,16 +182,6 @@ static int LOCAL_exampleInit ( unsigned short pruNum )
     }  
     pruDataMem_int = (unsigned int*) pruDataMem;
     
-    // Flush the values in the PRU data memory locations
-    pruDataMem_int[1] = 0x00;
-    pruDataMem_int[2] = 0x00;
-
     return(0);
 }		
-
-static unsigned short LOCAL_examplePassed ( unsigned short pruNum )
-{
-  printf("%d\n", pruDataMem_int[2]);
-  return ((pruDataMem_int[1] ==  ADDEND1) & (pruDataMem_int[2] ==  ADDEND1 + ADDEND2));
-}
 

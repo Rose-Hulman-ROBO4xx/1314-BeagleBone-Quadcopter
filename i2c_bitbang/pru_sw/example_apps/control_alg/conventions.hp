@@ -5,7 +5,7 @@
 .setcallreg 			RA_REG
 .origin 0
 .entrypoint CONTROL_MAIN
-#define SP_reg 			r18
+#define SP_reg 			r16
 
 #define GPIO1 0x4804c000
 #define GPIO0 0x44E07000
