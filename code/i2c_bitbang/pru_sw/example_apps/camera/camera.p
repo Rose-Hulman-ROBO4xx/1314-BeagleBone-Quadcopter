@@ -85,11 +85,16 @@ MEMACCESSPRUDATARAM:
         WBC   CAM_BITS, CAM_CLK
         WBS   CAM_BITS, CAM_CLK
         MOV   r0.b0, CAM_BITS.b0
-      
+     
         WBC   CAM_BITS, CAM_CLK
         WBS   CAM_BITS, CAM_CLK
         MOV   r0.b1, CAM_BITS.b0
-
+	QBEQ fill_ones, r0.b1, 0
+	jmp skip_fill
+fill_ones:
+	mov r0.b1, 255
+skip_fill:
+ 
         SBBO  r0.w1, currBuff, pixelByteCount, 2
         ADD   pixelByteCount, pixelByteCount, 2
         QBGE  Pixels, pixelByteCount, numCols
