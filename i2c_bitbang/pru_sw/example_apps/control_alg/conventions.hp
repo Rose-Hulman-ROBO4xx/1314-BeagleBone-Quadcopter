@@ -22,7 +22,7 @@
 #define PWM_2_BIT		19
 #define PWM_3_BANK		GPIO0
 #define PWM_3_BIT		5
-
+#define PWM_MIN			100000
 #define SCL_BANK		GPIO0
 #define SCL_BIT			31
 

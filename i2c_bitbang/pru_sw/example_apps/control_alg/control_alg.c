@@ -1,158 +1,99 @@
-/*
- * PRU_memAccessPRUDataRam.c
- *
- * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/ 
- * 
- * 
- *  Redistribution and use in source and binary forms, with or without 
- *  modification, are permitted provided that the following conditions 
- *  are met:
- *
- *    Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer.
- *
- *    Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the   
- *    distribution.
- *
- *    Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
- *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
-*/
-
-/*
- * ============================================================================
- * Copyright (c) Texas Instruments Inc 2010-12
- *
- * Use of this software is controlled by the terms and conditions found in the
- * license agreement under which this software has been supplied or provided.
- * ============================================================================
- */
-
-/*****************************************************************************
-* PRU_memAccessPRUDataRam.c
-*
-* The PRU reads and stores values into the PRU Data RAM memory. PRU Data RAM 
-* memory has an address in both the local data memory map and global memory 
-* map. The example accesses the local Data RAM using both the local address 
-* through a register pointed base address and the global address pointed by 
-* entries in the constant table. 
-*
-******************************************************************************/
-
-
-/*****************************************************************************
-* Include Files                                                              *
-*****************************************************************************/
-
 #include <stdio.h>
-
-// Driver header file
+#include <stdlib.h>
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
 
-/*****************************************************************************
-* Explicit External Declarations                                             *
-*****************************************************************************/
-
-/*****************************************************************************
-* Local Macro Declarations                                                   *
-*****************************************************************************/
-
 #define PRU_NUM 	0
-#define ADDEND1		0x0010F012u
-#define ADDEND2		0x0000567Au
+#define PWM_N_ADDRESS 8
+#define PWM_E_ADDRESS 9
+#define PWM_S_ADDRESS 10
+#define PWM_W_ADDRESS 11
 
 #define AM33XX
 
-/*****************************************************************************
-* Local Typedef Declarations                                                 *
-*****************************************************************************/
-
-
-/*****************************************************************************
-* Local Function Declarations                                                *
-*****************************************************************************/
-
-static int LOCAL_exampleInit ( unsigned short pruNum );
-static unsigned short LOCAL_examplePassed ( unsigned short pruNum );
-
-/*****************************************************************************
-* Local Variable Definitions                                                 *
-*****************************************************************************/
-
-
-/*****************************************************************************
-* Intertupt Service Routines                                                 *
-*****************************************************************************/
-
-
-/*****************************************************************************
-* Global Variable Definitions                                                *
-*****************************************************************************/
-
 volatile static void *pruDataMem;
-volatile static unsigned int *pruDataMem_int;
+volatile static signed int *pruDataMem_int;
 
-/*****************************************************************************
-* Global Function Definitions                                                *
-*****************************************************************************/
 
-int main (void)
-{
+typedef struct imu_data_t{
+	signed short x_a;
+	signed short y_a;
+	signed short z_a;
+	signed short x_g;
+	signed short y_g;
+	signed short z_g;
+	int sample_num;
+	
+}imu_data_t;
+
+typedef struct pwm_frame_t{
+	volatile int* N;
+	volatile int* E;
+	volatile int* S;
+	volatile int* W;
+} pwm_frame_t;
+
+void get_imu_frame(imu_data_t * imu_frame){
+	while(!pruDataMem_int[1]){ // wait for pru to signal that new data is available
+	}
+	pruDataMem_int[1] = 0;
+	imu_frame->x_a = (signed short)pruDataMem_int[2];
+        imu_frame->y_a = (signed short)pruDataMem_int[3];
+        imu_frame->z_a = (signed short)pruDataMem_int[4];
+        imu_frame->x_g = (signed short)pruDataMem_int[5];
+        imu_frame->y_g = (signed short)pruDataMem_int[6];
+        imu_frame->z_g = (signed short)pruDataMem_int[7];
+	imu_frame->sample_num = pruDataMem_int[12];
+}
+
+pwm_frame_t * get_pwm_pointer(){
+	pwm_frame_t * pwm_frame = malloc(sizeof(pwm_frame_t));
+	pwm_frame->N = &(pruDataMem_int[PWM_N_ADDRESS]);
+	pwm_frame->E = &(pruDataMem_int[PWM_E_ADDRESS]);
+	pwm_frame->S = &(pruDataMem_int[PWM_S_ADDRESS]);
+	pwm_frame->W = &(pruDataMem_int[PWM_W_ADDRESS]);
+	return pwm_frame;
+}
+
+void initialize_pru(){
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-    
-    printf("\nINFO: Starting %s example.\r\n", "PRU_memAccessPRUDataRam");
-    /* Initialize the PRU */
-    prussdrv_init ();		
-    
+
+    prussdrv_init ();
     /* Open PRU Interrupt */
     ret = prussdrv_open(PRU_EVTOUT_0);
     if (ret)
     {
         printf("prussdrv_open open failed\n");
-        return (ret);
+        exit(ret);
     }
     
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
-    /* Initialize example */
-    printf("\tINFO: Initializing example.\r\n");
-    LOCAL_exampleInit(PRU_NUM);
-    
-    /* Execute example on PRU */
-    printf("\tINFO: Executing example.\r\n");
+    //Initialize pointer to PRU data memory
+    if (PRU_NUM == 0)
+    {
+      prussdrv_map_prumem (PRUSS0_PRU0_DATARAM, &pruDataMem);
+    }
+    else if (PRU_NUM == 1)
+    {
+      prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, &pruDataMem);
+    }  
+    pruDataMem_int = (volatile signed int*) pruDataMem;
+}
+void start_pru(){
     prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
+    pruDataMem_int[0] = 1;
+}
 
-    
+
+void uninitialize_pru(){
+    pruDataMem_int[0] = 0;
+
     /* Wait until PRU0 has finished execution */
     printf("\tINFO: Waiting for HALT command.\r\n");
     prussdrv_pru_wait_event (PRU_EVTOUT_0);
-
-    signed short x_a = pruDataMem_int[2];
-    signed short y_a = pruDataMem_int[3];
-    signed short z_a = pruDataMem_int[4];
-    signed short x_g = pruDataMem_int[5];
-    signed short y_g = pruDataMem_int[6];
-    signed short z_g = pruDataMem_int[7];
-    printf("%d,%d,%d,%d,%d,%d\n", x_a, y_a, z_a, x_g, y_g, z_g);
-
 
     printf("\tINFO: PRU completed transfer.\r\n");
     prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
@@ -161,27 +102,45 @@ int main (void)
     prussdrv_pru_disable (PRU_NUM);
     prussdrv_exit ();
 
-    return(0);
 
 }
 
-/*****************************************************************************
-* Local Function Definitions                                                 *
-*****************************************************************************/
-
-static int LOCAL_exampleInit ( unsigned short pruNum )
-{  
-    //Initialize pointer to PRU data memory
-    if (pruNum == 0)
-    {
-      prussdrv_map_prumem (PRUSS0_PRU0_DATARAM, &pruDataMem);
-    }
-    else if (pruNum == 1)
-    {
-      prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, &pruDataMem);
-    }  
-    pruDataMem_int = (unsigned int*) pruDataMem;
+int main (void)
+{
     
+    initialize_pru();
+    int count = 0; 
+    pwm_frame_t * pwm_frame = get_pwm_pointer();
+
+    *(pwm_frame->N) = 100000;
+    *(pwm_frame->E) = 100000;
+    *(pwm_frame->S) = 100000;
+    *(pwm_frame->W) = 100000;
+    imu_data_t imu_data;
+    start_pru();
+    int i;
+    printf("clearing DLPF on imu..\n");
+    for (i = 0; i < 200; i++){
+	    get_imu_frame(&imu_data);
+    }
+    double x_g_avg = 0;
+    for (i = 0; i < 2000; i++){
+        get_imu_frame(&imu_data);
+	x_g_avg += imu_data.x_g;
+        printf("%d: %d\n", imu_data.sample_num, imu_data.x_g);
+        count += 1;
+    }
+    x_g_avg/=2000;
+    double current_rot = 0;
+
+    for (i = 0; i < 5000000; i++){
+        get_imu_frame(&imu_data);
+	current_rot += imu_data.x_g-x_g_avg;
+        *(pwm_frame->N) = 130000-(current_rot/30);
+	printf("current_rot: %d\n", *(pwm_frame->N));
+    }
+    printf("%d\n", count);
+    uninitialize_pru();
     return(0);
-}		
+}
 

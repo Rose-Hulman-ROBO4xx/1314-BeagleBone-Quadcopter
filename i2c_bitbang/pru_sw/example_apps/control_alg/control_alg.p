@@ -9,15 +9,12 @@
 	.u16 y_g
 	.u16 z_g
 .ends
-.struct imu_avg_data_frame
-	.u32 x_a
-	.u32 y_a
-	.u32 z_a
-	.u32 x_g
-	.u32 y_g
-	.u32 z_g
+.struct pwm_state_frame
+	.u32 N
+	.u32 E
+	.u32 S
+	.u32 W
 .ends
-
 
 
 
@@ -29,52 +26,47 @@ CONTROL_MAIN:
 	MOV       r1, CTBIR_0
 	ST32      r0, r1
 	
-	mov SP_reg, 100 // set up the stack
+	mov SP_reg, 1000 // set up the stack
 	
-	.assign imu_avg_data_frame, R8, R13, imu_temporary_average
 	.assign imu_data_frame, RET_VAL_0, RET_VAL_2, imu_return_data
-	.assign imu_data_frame, R0, r2, imu_avg
+	.assign pwm_state_frame, R9, R12, pwm_state
 
 	call PWM_ENABLE_GPIO_AND_SET_DIRECTIONS
 	call IMU_ENABLE_GPIO_AND_SET_DIRECTIONS
-	mov imu_temporary_average.x_a, 0
-	mov imu_temporary_average.y_a, 0
-	mov imu_temporary_average.z_a, 0
+	
+	mov pwm_state.N, PWM_MIN
+	mov pwm_state.E, PWM_MIN
+	mov pwm_state.S, PWM_MIN
+	mov pwm_state.W, PWM_MIN
+	mov r14, 0
+DATA_LOOP:
 
-	mov imu_temporary_average.x_g, 0
-	mov imu_temporary_average.y_g, 0
-	mov imu_temporary_average.z_g, 0
-
-	mov R6, 0
-	mov R7, 4096
-
-GET_AVERAGE_IMU_LOOP:
 	call GET_IMU_DATA
-	add imu_temporary_average.x_a, imu_temporary_average.x_a,  imu_return_data.x_a
-	add imu_temporary_average.y_a, imu_temporary_average.y_a,  imu_return_data.y_a
-	add imu_temporary_average.z_a, imu_temporary_average.z_a,  imu_return_data.z_a
-	add imu_temporary_average.x_g, imu_temporary_average.x_g,  imu_return_data.x_g
-	add imu_temporary_average.y_g, imu_temporary_average.y_g,  imu_return_data.y_g
-	add imu_temporary_average.z_g, imu_temporary_average.z_g,  imu_return_data.z_g
-	add R6, R6, 1
-	QBNE GET_AVERAGE_IMU_LOOP, R6, R7
+	add r14, r14, 1
+	SBCO imu_return_data.x_a, CONST_PRUDRAM, 8, 2
+	SBCO imu_return_data.y_a, CONST_PRUDRAM, 12, 2
+	SBCO imu_return_data.z_a, CONST_PRUDRAM, 16, 2 
+	SBCO imu_return_data.x_g, CONST_PRUDRAM, 20, 2 
+	SBCO imu_return_data.y_g, CONST_PRUDRAM, 24, 2 
+	SBCO imu_return_data.z_g, CONST_PRUDRAM, 28, 2 
+	sbco r14, CONST_PRUDRAM, 48, 4
 
-	lsr imu_avg.x_a, imu_temporary_average.x_a, 12
-	lsr imu_avg.y_a, imu_temporary_average.y_a, 12
-	lsr imu_avg.z_a, imu_temporary_average.z_a, 12
-	lsr imu_avg.x_g, imu_temporary_average.x_g, 12
-	lsr imu_avg.y_g, imu_temporary_average.y_g, 12
-	lsr imu_avg.z_g, imu_temporary_average.z_g, 12
+	mov r8, 1
+	sbco r8, CONST_PRUDRAM, 4, 4
 
-	lsr imu_temporary_average.x_a, imu_temporary_average.x_a, 12
-	lsr imu_temporary_average.y_a, imu_temporary_average.y_a, 12
-	lsr imu_temporary_average.z_a, imu_temporary_average.z_a, 12
-	lsr imu_temporary_average.x_g, imu_temporary_average.x_g, 12
-	lsr imu_temporary_average.y_g, imu_temporary_average.y_g, 12
-	lsr imu_temporary_average.z_g, imu_temporary_average.z_g, 12
+	lbco ARG_0,CONST_PRUDRAM, 32, 4
+	lbco ARG_1,CONST_PRUDRAM, 36, 4
+	lbco ARG_2,CONST_PRUDRAM, 40, 4
+	lbco ARG_3,CONST_PRUDRAM, 44, 4
+	call SEND_PWM_PULSE
+//	call PWM_DELAY
 	
 
-	SBCO      imu_temporary_average, CONST_PRUDRAM, 8, 24
+	lbco r13, CONST_PRUDRAM, 0, 4
+	QBNE DATA_LOOP, R13, 0
+	mov r3, 0
+	sbco r3, CONST_PRUDRAM, 0, 4
+
 
 
     // Send notification to Host for program completion
