@@ -1,15 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #define PRU_NUM 	1
 #define PRU_FILE_NAME "camera.bin"
+
+#define DDR_BASEADDR 0x80000000
+#define OFFSET_DDR         (224*1024*1024)
+#define PRU_DDR_SIZE (16*1024*1024)
+#define PRU0_DDR ( DDR_BASEADDR + OFFSET_DDR )
+#define PRU1_DDR ( PRU0_DDR +PRU_DDR_SIZE)
+
 volatile static void *pruDataMem;
-volatile static void *pruExtMem;
 volatile static signed int *pruDataMem_int;
-volatile static unsigned char * pruExtMem_byte;
-
-
+volatile uint16_t *pru1_ddr;
 
 void initialize_pru();
 void start_pru();
@@ -53,17 +61,26 @@ void initialize_pru(){
     pruDataMem_int = (volatile signed int*) pruDataMem;
 
     //initialize external ram:
-    prussdrv_map_extmem(&pruExtMem);
-    pruExtMem_byte = (volatile unsigned char*) pruExtMem;
-    int i;
-    for (i = 0; i < 0x80001; i++){
-        pruExtMem_byte[i] = 255;
+    //
+    int mem_fd = open("/dev/mem", O_RDWR);
+    if (mem_fd < 0){
+	printf("couldn't open /dev/mem\n");
+	exit(-1);
     }
+
+    pru1_ddr= (uint16_t*)mmap(0, PRU_DDR_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd, PRU1_DDR);
+    if (pru1_ddr == NULL){
+        printf("couldn't map pru1 ddr\n");
+        exit(-1);
+    }
+    
+    
+
     pruDataMem_int[0] = 1;
-    pruDataMem_int[2] = pruExtMem;
-    pruDataMem_int[3] = pruExtMem + 640*480;//((int)prussdrv_get_phys_addr(pruExtMem)) + 640*480;
-    printf("%p, %p\n", (void *) pruExtMem_byte, (void*) pruExtMem);
-    printf("%p\n", prussdrv_get_phys_addr(pruExtMem));
+    pruDataMem_int[2] = PRU1_DDR;
+    pruDataMem_int[3] = PRU1_DDR + 640*480;
+    printf("WE DIDN'T ALL DIE!\n");
+    fflush(stdout);
     
 }
 void start_pru(){
@@ -105,24 +122,14 @@ int main (void)
 
 	initialize_pru();
 	start_pru();
-/*
-	system( "echo 87 > /sys/class/gpio/unexport" );
-	system( "echo 86 > /sys/class/gpio/unexport" );
-	system( "echo 14 > /sys/class/gpio/unexport" );
-
-	if( 0 != system( "echo 07 > /sys/kernel/debug/omap_mux/gpmc_ad8" ) )
-		exit(-1)
-
-	if( 0 != system( "echo 07 > /sys/kernel/debug/omap_mux/gpmc_ad8" ) )
-		exit(-1)
-
-	if( 0 != system( "echo 07 > /sys/kernel/debug/omap_mux/gpmc_ad8" ) )
-		exit(-1)
-*/
-	/*while(1){
-		printf("%d\n", pruDataMem_int[100]);
-	}	
-*/
+	FILE * image_data = fopen("image.bin", "w");
+	if (image_data == NULL){
+		fprintf(stderr, "Failed to open image output file");
+		exit(-1);
+	}
+	fwrite((uint16_t *)pru1_ddr, sizeof(uint16_t), 640*480, image_data);
+	printf("%d\n", ((volatile uint16_t *)pru1_ddr)[0]);
+	fclose(image_data);
 	uninitialize_pru();
 	return(0);
 }
