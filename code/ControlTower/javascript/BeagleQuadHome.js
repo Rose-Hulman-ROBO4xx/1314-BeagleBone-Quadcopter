@@ -1,11 +1,10 @@
 // Boilerplate code for socket io stuff
-var joystick = new (require('joystick'))(0, 3500, 350); //install by "npm install joystick"
-
 "use strict";
 
 var socket;
 var firstconnect = true;
 var init_home=1;
+var eventJoystickFlag = 0;
 
 function connect() {
 	if (firstconnect) {
@@ -193,20 +192,115 @@ document.onkeydown = function(e) {
 	e.preventDefault();
 }
 
-joystick.on('axis', joystick_logger);
+var controllers = {};
+var rAF = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.requestAnimationFrame;
 
-// go ahead and pass the message along in JSON form though... do something like {direction: 0, value: message}
-function joystick_logger(message){
-    if (message['number']==0){
-        socket.emit("joystickMoved",{"direction":0, "value":message});
-    }
-    if (message['number']==1){
-        socket.emit("joystickMoved",{"direction":1, "value":message});
-    }
-    if (message['number']==2){
-        socket.emit("joystickMoved",{"direction":2, "value":message});
-    }
-    if (message['number']==4){
-        socket.emit("joystickMoved",{"direction":4, "value":message});
-    }
+function connecthandler(e){
+	if(document.getElementById('fly_tab').className == 'active'){
+		addgamepad(e.gamepad);
+	}
+}
+
+function addgamepad(gamepad){
+	controllers[gamepad.index] = gamepad;
+	var controllerView = document.createElement("div");
+	controllerView.setAttribute("id", "controller" + gamepad.index);
+	var controllerHeader = document.createElement("h1");
+	controllerHeader.appendChild(document.createTextNode("User Game Controller: " + gamepad.id));
+	controllerView.appendChild(controllerHeader);
+	var buttons = document.createElement("div");
+	buttons.className = "buttons";
+	for(var i =0; i<gamepad.buttons.length; i++){
+		var button = document.createElement("span");
+		button.className = "button";
+		button.innerHTML = i;
+		buttons.appendChild(button);
+	}
+	controllerView.appendChild(buttons);
+	var axes = document.createElement("div");
+	axes.className = "axes";
+	for(var i=0; i<gamepad.axes.length; i++){
+		var axis = document.createElement("progress");
+		axis.className = "axis";
+		axis.setAttribute("max", "2");
+		axis.setAttribute("value", "1");
+		axis.innerHTML = i;
+		axes.appendChild(axis);
+	}
+	controllerView.appendChild(axes);
+	var flyTab = document.getElementById('fly_tab');
+	flyTab.appendChild(controllerView);
+	rAF(updateStatus_withTimeOut);
+}
+
+function updateStatus(){
+	if(navigator.webkitGetGamepads){
+		scangamepads();
+	}
+	for(var gamepad in controllers){
+		var controller = controllers[gamepad];
+		var d = document.getElementById("controller" + gamepad);
+		var buttons = d.getElementsByClassName("button");
+		for(var i=0; i<controller.buttons.length; i++){
+			var b = buttons[i];
+			var val = controller.buttons[i];
+			var pressed = val == 1.0;
+			if(typeof(val) == "object"){
+				pressed = val.pressed;
+				val = val.value;
+			}
+			if(pressed){
+				b.className = "button pressed";
+			}
+			else{
+				b.className = "button";
+			}
+			socket.emit("controllerButtonEvent", i, val);
+		}
+		var axes = d.getElementsByClassName("axis");
+		for(var i =0; i < controller.axes.length; i++){
+			var a = axes[i];
+			a.innerHTML = i + ": " + controller.axes[i].toFixed(4);
+			a.setAttribute("value", controller.axes[i] + 1);
+			socket.emit("controllerAxesEvent", i, a.getAttribute("value"));
+		}
+	}
+	rAF(updateStatus_withTimeOut);
+}
+
+function scangamepads(){
+	if(document.getElementById('fly_tab').className == 'active'){
+	var gamepads = navigator.webkitGetGamepads();
+	for(var i =0; i < gamepads.length; i++){
+		if(gamepads[i]){
+			if(!(gamepads[i].index in controllers)){
+				addgamepad(gamepads[i]);
+			}
+			else{
+				controllers[gamepads[i].index] = gamepads[i];
+			}
+		}
+	}
+	}
+}
+
+function disconnecthandler(e){
+	removegamepad(e.gamepad);
+}
+
+function removegamepad(gamepad){
+	var d = document.getElementById("controller" + gamepad.index);
+	document.body.removeChild(d);
+	delete controller[gamepad.index];
+}
+
+
+window.addEventListener("gamepadconnected", connecthandler);
+window.addEventListener("gamepaddisconnected", disconnecthandler);
+if(navigator.webkitGetGamepads){
+	setInterval(scangamepads, 5000);
+}
+
+function updateStatus_withTimeOut(){
+	setTimeout(updateStatus, 1000);
 }

@@ -85,9 +85,16 @@ io.sockets.on('connection', function (socket) {
 	writeToFile(key+":"+value);
     });
 
-    socket.on('jotstickMoved', function (data) {
-        // pick off which value was sent via switch case and write to file
+    socket.on('controllerButtonEvent', function (key, value) {
+  //      	console.log("controllerButtonEvent: button:" + key + " value:" + value);
+		writeToFile(key+":"+value);
+	    // pick off which value was sent via switch case and write to file
     });
+
+    socket.on('controllerAxesEvent', function(key, value){
+//        console.log("controllerButtonEvent: axes:" + key + " value:" + value);
+	writeToFile(key+":"+value);
+	   });
 
 
     // Boilerplate to deal with connection managing

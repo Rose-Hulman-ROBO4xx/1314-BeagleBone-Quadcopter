@@ -1,102 +1,147 @@
 <!DOCTYPE html>
 <html>
   <head>
-          <title>BBB Quadcopter Portal</title>
+	  <title>BBB Quadcopter Portal</title>
 		  <style> canvas {width: 100%; height: 100% } </style>
-          <link rel="stylesheet" type="text/css" href="/css/BeagleQuadHome.css" title="default"/>
-          <!--<link rel="alternate stylesheet" type="text/css" href="/css/BeagleQuadHomeThin.css" title="thin"/>-->
-          <!--<link rel="alternate stylesheet" type="text/css" href="/css/BeagleQuadHomeWide.css" title="wide"/>-->
-          <!--<link rel="alternate stylesheet" type="text/css" href="/css/BeagleQuadeHomeWider.css" title="wider"/>-->
+	  <link rel="stylesheet" type="text/css" href="/css/BeagleQuadHome.css" title="default"/>
+	  <!--<link rel="alternate stylesheet" type="text/css" href="/css/BeagleQuadHomeThin.css" title="thin"/>-->
+	  <!--<link rel="alternate stylesheet" type="text/css" href="/css/BeagleQuadHomeWide.css" title="wide"/>-->
+	  <!--<link rel="alternate stylesheet" type="text/css" href="/css/BeagleQuadeHomeWider.css" title="wider"/>-->
 
 	  <script src="/socket.io/socket.io.js" type="text/javascript"></script>
-	  <script src="/javascript/joysticktest.js" type="text/javascript"></script>
 	<script src="/javascript/BeagleQuadHome.js" type="text/javascript"></script>
     <script src="jquery/jquery.js" type="text/javascript"></script>
-	<script src="/javascript/BQAnimation.js" type="text/javascript"></script>
   </head>
 <body>
     <div class="container">
-        <div class="header">
+	    <div class="header">
+		    <div id="gamepads"></div>
+		    <script>
+			    var gamepads = {};
+			    function gamepadHandler(event, connecting){
+				var gamepad = event.gamepad;
+				if(connecting){
+					gamepads[gamepad.id] = gamepad;
+				}else{
+					delete gamepads[gamepad.id];
+				}
+				}
+				window.addEventListener("MozGamepadDisconnected", function(e) { gamepadHandler(e, true);});
+				window.addEventListener("MozGamepadDisconnected", function(e) { gamepadHandler(e, false);});
+			    function gamepadConnected(e){
+			    var gamepads = document.getelementById("gamepads");
+				var gamepadId = e.gamepad.id;
+				gamepads.innerHTML += " Gamepad Connected (id=" + gamepadId + ")";
+			}
+			window.addEventListener("MozGamepadConnected", gamepadConnected, false);
+			function gamepadDisconnected(e){
+				var gamepads = document.getElementById("gamepads")
+				var gamepadId = e.gamepad.id;
+				gamepads.innerHTML += " Gamepad Disconnected (id=" + gamepadId + ")";
+				}
+				window.addEventListener("MozGamepadDisconnected", gamepadDisconnected, false);
+				function buttonHandler(event, pressed){
+					var gamepads = document.getElementById("gamepads");
+					var gamepadId = event.gamepad.id;
+					var button = event.button;
+					var text = pressed ? " Gamepad button pressed" : " Gamepad button released";
+
+					gamepads.innerHTML += text +  " (id= " + gamepadId + ", button= " + button + ")";
+					}
+					window.addEventListener("MozGamepadButtonDown", function(e) { buttonHandler(e, true); }, false);
+					window.addEventListener("MozGamepadButtonUp", function(e) { buttonHandler(e, false); }, false);
+					function axisHandler(event, pressed){
+						var gamepads = document.getElementById("gamepads");
+						var gamepadId = event.gamepad.id;
+						var axis = event.axis;
+						var value = event.value;
+						gamepads.innerHTML += " Gamepad Axis Move (id= " + gamepadId + ", axis= " + axis + ", value= " + value + ")";
+						}
+						window.addEventListener("MozGamepadAxisMove", axisHandler, false);
+		</script>
 		<div class="logo">
-            <ul>
+	    <ul>
 			<li id="TI_logo">
-                    <img src="./images/TiLogo.jpg" alt="TI Quadcopter Home" id="TI_QC_logo"></img>
-                    <img src="./images/TIDog.png" alt="Slogan" id="slogan"></img>
-                </li>
-                <li id="middle_menu">
-                    <ul>
-                        <li> Beagleboard.org Quadcopter Cape
-                        </li>
-							
-                    </ul>
-                </li>
-                <li id="rose_logos">
-                    <img src="./images/rose_logo.jpg" alt="rose_logo" id="rose_logo"></img>
+		    <img src="./images/TiLogo.jpg" alt="TI Quadcopter Home" id="TI_QC_logo"></img>
+		    <img src="./images/TIDog.png" alt="Slogan" id="slogan"></img>
+		</li>
+		<li id="middle_menu">
+		    <ul>
+			<li> Beagleboard.org Quadcopter Cape
+			</li>
+
+		    </ul>
+		</li>
+		<li id="rose_logos">
+		    <img src="./images/rose_logo.jpg" alt="rose_logo" id="rose_logo"></img>
 					<img src="./images/rose_robotics_logo.jpg" alt="rose_robotics_logo" id="rose_robotics_logo"></img>
-                </li>
-            </ul>
-            <div class="menu">
-                <ul class="tabs">
-                    <li>
+		</li>
+	    </ul>
+	    <div class="menu">
+
+
+
+		<ul class="tabs">
+		    <li>
 					<a class="inactive"  id="fly_tab" href="javascript:void(0);" onclick="tabSwitch('fly_tab', 'fly')">Fly</a>
-                    </li>
-                    <li><a class="inactive"  id="build_tab" href="javascript:void(0);" onclick="tabSwitch('build_tab', 'build');">Build</a
-                        
-                    </li>
-                </ul>
+		    </li>
+		    <li><a class="inactive"  id="build_tab" href="javascript:void(0);" onclick="tabSwitch('build_tab', 'build');">Build</a
+
+		    </li>
+		</ul>
 				<ul id="home_images">
-                    <ul>
+		    <ul>
 					<li>
 						<img src="./images/Cape.jpg" alt="BeagleBoneBlack" id="Cape"></img>
-                    </li>
-                    <li>
-						<img src="./images/Frame.jpg" alt="QuadCopter_Logo" id="Frame"></img>                        
-                    </li>
+		    </li>
+		    <li>
+						<img src="./images/Frame.jpg" alt="QuadCopter_Logo" id="Frame"></img>
+		    </li>
 					</ul>
 					<ul>
 					<li>
 						<img src="./images/QuadCopterImage.jpg" alt="QuadCopter_Logo" id="QuadCopterImage"></img>
-                    </li>
+		    </li>
 					</ul>
 					<ul>
-                    <li id="BBB_li">
-						<img src="./images/BBB.jpg" alt="QuadCopter_Logo" id="BBB"></img>                        
-                    </li>
+		    <li id="BBB_li">
+						<img src="./images/BBB.jpg" alt="QuadCopter_Logo" id="BBB"></img>
+		    </li>
 					<li id="BBB_li">
-						<li id="BBB_li2"><img src="./images/MPU.jpg" alt="QuadCopter_Logo" id="MPU"></img>   
+						<li id="BBB_li2"><img src="./images/MPU.jpg" alt="QuadCopter_Logo" id="MPU"></img>
 						</li>
-						<li id="BBB_li2"><img src="./images/UltraSonic.jpg" alt="QuadCopter_Logo" id="UltraSonic"></img>                         </li>						
+						<li id="BBB_li2"><img src="./images/UltraSonic.jpg" alt="QuadCopter_Logo" id="UltraSonic"></img>			 </li>
 						<li id="BBB_li2"><img src="./images/Camera.jpg" alt="QuadCopter_Logo" id="Camera"></img> </li>
-						
-                    </li>
+
+		    </li>
 					</ul>
-                </ul>
-					
+		</ul>
+
 					<ul class="sub_tabs">
-                            <li><a  id="instructions_tab" href="javascript:tabSwitch('instructions_tab', 'instructions_tab');">Instructions</a>
+			    <li><a  id="instructions_tab" href="javascript:tabSwitch('instructions_tab', 'instructions_tab');">Instructions</a>
 
-                            </li>
-                            <li><a id="hud_tab" href="javascript:tabSwitch('hud_tab', 'hud_tab');">Heads Up Display</a>
+			    </li>
+			    <li><a id="hud_tab" href="javascript:tabSwitch('hud_tab', 'hud_tab');">Heads Up Display</a>
 
-                            </li>
-                            <li><a id="diagnostics_tab" href="javascript:tabSwitch('diagnostics_tab', 'diagnostics_tab');">Diagnostics</a>
+			    </li>
+			    <li><a id="diagnostics_tab" href="javascript:tabSwitch('diagnostics_tab', 'diagnostics_tab');">Diagnostics</a>
 
-                            </li>
+			    </li>
 							<li><a id="opensource_tab" href="javascript:tabSwitch('opensource_tab', 'opensource_tab');">Open Source</a>
 
-                            </li>
+			    </li>
 							<li><a id="forum_tab" href="javascript:tabSwitch('forum_tab', 'forum_tab');">Forum</a>
 
-                            </li>
+			    </li>
 							<li><a id="purchase_tab" href="javascript:tabSwitch('purchase_tab', 'purchase_tab');">Forum</a>
 
-                            </li>
-							
-                        </ul>
-                <div id="heads_up_display_content" class="content">
+			    </li>
+
+			</ul>
+		<div id="heads_up_display_content" class="content">
 					<ul class="movements" >
 					<img id="quad_image" src="./images/original.gif">
-					<li><a  id="up_arrow" href="javascript:void(0);" onclick="rotateQuad('up', 1);">UP</a></li>
+					<li><a	id="up_arrow" href="javascript:void(0);" onclick="rotateQuad('up', 1);">UP</a></li>
 					<li> <a id="down_arrow" href="javascript:void(0);" onclick="rotateQuad('up', -1);">DOWN</a></li>
 					 <li><a id="roll_left" href="javascript:void(0);" onclick="rotateQuad('roll', 1);">ROLL LEFT</a></li>
 					 <li><a id="roll_right" href="javascript:void(0);" onclick="rotateQuad('roll', -1);">ROLL RIGHT</a></li>
@@ -105,16 +150,17 @@
 					 <li><a id="yaw_left" href="javascript:void(0);" onclick="rotateQuad('yaw', 1);">YAW LEFT</a></li>
 					<li><a id="yaw_right" href="javascript:void(0);" onclick="rotateQuad('yaw', -1);">YAW RIGHT</a></li>
 				</ul>
-					 
-                </div>
-				
-                <div id="instructions_content" >
-				
+
+		</div>
+
+		<div id="instructions_content" >
+
 				</div>
-				
-                <div id="diagnostics_content" class="content">Content for diagnostics</div>
-            </div>
-        </div>
+
+		<div id="diagnostics_content" class="content">Content for diagnostics</div>
+	    </div>
+	</div>
     </div>
+
 </body>
 </html>
