@@ -314,7 +314,7 @@ function updateStatus(){
 		});
 		var axes = d.getElementsByClassName("axis");
 		//TODO: change this to show the degree of roll, pitch, yaw...
-		if(CONTROLS_ACTIVE==TRUE){
+//		if(CONTROLS_ACTIVE==TRUE){
 		for(var i =0; i < controller.axes.length; i++){
 			//TODO: do this better...
 //			console.log("axes");
@@ -325,7 +325,7 @@ function updateStatus(){
 	}
 
 	}
-	}
+//	}
 	sendControlData();
 //	console.log("exiting updateStatus");
 }
@@ -388,26 +388,26 @@ function controlDataString(index, value){
 
 function controllerButtonEvent(button, value){
 	switch(button){
-		case 0:
-			if(HOVER_STATE==TRUE){
-				hover();		
-				HOVER_STATE = FALSE;
-			}
-			else{
-				CONTROLS_ACTIVE = TRUE;
-				HOVER_STATE = TRUE;
-			}
-			break;
-		case 9:
-			if(START_STATE==FALSE){
-				land();
-				START_STATE=TRUE;
-			}
-			else{
-				CONTROLS_ACTIVE = TRUE;
-				START_STATE=FALSE;
-			}
-			break;
+		//case 0:
+		//	if(HOVER_STATE==TRUE){
+		//		hover();		
+		//		HOVER_STATE = FALSE;
+		//	}
+		//	else{
+		//		CONTROLS_ACTIVE = TRUE;
+		//		HOVER_STATE = TRUE;
+		//	}
+		//	break;
+		//case 9:
+		//	if(START_STATE==FALSE){
+		//		land();
+		//		START_STATE=TRUE;
+		//	}
+		//	else{
+		//		CONTROLS_ACTIVE = TRUE;
+		//		START_STATE=FALSE;
+		//	}
+		//	break;
 
 		//case 6:
 		//	controlDataString(THROTTLE, value);
