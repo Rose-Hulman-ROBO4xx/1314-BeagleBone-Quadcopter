@@ -16,35 +16,25 @@ var port = 1337, // Port to listen on
 
 var controlDataFile = '/tmp/BeagleQuad_ControlData.txt';
 
+var stream = fs.createWriteStream(controlDataFile, {flags: 'w'});
+
+var lines;
+
 function writeToFile(input){
-	fs.open(controlDataFile, 'a', undefined, function(error, fd){
-		if(error){
-			if(fd){
-				fs.close();
-			}
-			console.log('Error opening fifo: ' +error);
-		return;
-		}
-		fs.write(fd, input, 0, input.length, null, function(error, written, buffer){
-			if(fd){
-				fs.close(fd);
-			}
-			if(error){
-				console.log('Error writing to fifo: ' + error);
-			}
-			else{
-				if(written != input.length){
-					console.log("Error: Did not write all data to fifo stream");
-				}
-			}
-		});
-	});
+	for(var i = 0; i < input.length; i++){
+		stream.write(input[i]);
+	}
 }
+
 
 // Initialize various IO things.
 function initIO() {
 }
 
+
+//function closeServer(){
+//	stream.end();	
+//}
 initIO();
 
 // Create a server and get it listening
@@ -86,13 +76,13 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('controllerButtonEvent', function (key, value) {
-  //      	console.log("controllerButtonEvent: button:" + key + " value:" + value);
+      	console.log("controllerButtonEvent: button:" + key + " value:" + value);
 		writeToFile(key+":"+value);
 	    // pick off which value was sent via switch case and write to file
     });
 
     socket.on('controllerAxesEvent', function(key, value){
-//        console.log("controllerButtonEvent: axes:" + key + " value:" + value);
+        console.log("controllerButtonEvent: axes:" + key + " value:" + value);
 	writeToFile(key+":"+value);
 	   });
 
@@ -105,6 +95,10 @@ io.sockets.on('connection', function (socket) {
     });
     connectCount++;
     console.log("connectCount = " + connectCount);
+
+//    socket.on('close', function(){
+//		    closeServer();
+//	    });
 });
 
 // Send a 404 page not found when an issue occurs

@@ -108,6 +108,7 @@ function tabSwitch(newTab){
 	else if(newTab == "build_tab"){
 		document.getElementById(newTab).innerHTML = 'Building!';
 		document.getElementById(newTab).className = 'active';
+//		socket.emit('close');
 		document.getElementById('fly_tab').innerHTML = 'Fly';
 		document.getElementById('fly_tab').className = 'inactive';
 		buildTabs.forEach(function(entry){
@@ -121,12 +122,6 @@ function tabSwitch(newTab){
 		
 }
 
-
-// Callback on the client side for the test button
-function testButtonClick() {
-	console.log("Clicked the test button!")
-	socket.emit("testButtonPress",0);
-}
 
 // Handle key bindings for quadcopter control
 // http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
@@ -227,9 +222,10 @@ function addgamepad(gamepad){
 		axis.innerHTML = i;
 		axes.appendChild(axis);
 	}
+	//TODO change the above to make it faster
 	controllerView.appendChild(axes);
-	var flyTab = document.getElementById('fly_tab');
-	flyTab.appendChild(controllerView);
+	var heads_up_display_content= document.getElementById('heads_up_display_content');
+	heads_up_display_content.appendChild(controllerView);
 	rAF(updateStatus_withTimeOut);
 }
 
@@ -251,18 +247,19 @@ function updateStatus(){
 			}
 			if(pressed){
 				b.className = "button pressed";
+				socket.emit("controllerButtonEvent", i, val);
 			}
 			else{
 				b.className = "button";
+				socket.emit("controllerButtonEvent", i, val);
 			}
-			socket.emit("controllerButtonEvent", i, val);
 		}
 		var axes = d.getElementsByClassName("axis");
 		for(var i =0; i < controller.axes.length; i++){
 			var a = axes[i];
 			a.innerHTML = i + ": " + controller.axes[i].toFixed(4);
 			a.setAttribute("value", controller.axes[i] + 1);
-			socket.emit("controllerAxesEvent", i, a.getAttribute("value"));
+			socket.emit("controllerAxesEvent", i, (a.getAttribute("value")-1)*32768);
 		}
 	}
 	rAF(updateStatus_withTimeOut);
