@@ -139,7 +139,7 @@ IMU_MAIN:
 
 	mov ARG_0.b0, 0x68 //set the sample rate
 	mov ARG_0.b1, 0x19
-	mov ARG_0.b2, 0x03
+	mov ARG_0.b2, 0x04
 	call WRITE_BYTE
 
 	//configure tmp101

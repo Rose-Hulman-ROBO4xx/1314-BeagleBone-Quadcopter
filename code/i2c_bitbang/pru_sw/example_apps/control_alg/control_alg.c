@@ -5,7 +5,6 @@
 #include <math.h>
 #include <signal.h>
 #include "control_alg.h"
-
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
 
@@ -245,11 +244,10 @@ int main (void)
 	int count = 0;
 	while(pruDataMem_int[0] != 0){
 		if (bias < BIAS_MAX){
-			bias += BIAS_INCREASE_RATE;
-		} else{
-			//printf("bias maxed out\n");
+			bias += 5;
 		}
-
+		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
+		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
 		get_imu_frame(imu_frame);
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
@@ -316,7 +314,6 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	cf->roll = d_roll;
 	cf->pitch = d_pitch;
 	cf->yaw = d_yaw;
-	
 	d_z = 0;//FIXME
 	d_yaw = 0;
 	d_roll = 0;
