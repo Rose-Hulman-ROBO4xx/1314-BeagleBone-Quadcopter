@@ -19,8 +19,9 @@
 #define BIAS_INCREASE_RATE 1
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
-
-#define P_DEF		20 // 10
+#define MAX_I		1000
+#define MIN_I		-MAX_I
+#define P_DEF		25 // 10
 #define I_DEF		15  // 5	
 #define D_DEF		20  // 7
 
