@@ -159,7 +159,7 @@ WAIT_FOR_DATA_TO_BE_READY:
 	sbco r3, CONST_PRUDRAM, 36, 4
 
 
-	mov ARG_0.b0, 0xD0
+	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x3B
 	call READ_BYTE
 	mov r3, RET_VAL_0
@@ -170,7 +170,7 @@ WAIT_FOR_DATA_TO_BE_READY:
     //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
 	SBCO      r3, CONST_PRUDRAM, 8, 4
 
-	mov ARG_0.b0, 0xD0
+	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x3D
 	call READ_BYTE
 	mov r3, RET_VAL_0
@@ -181,7 +181,7 @@ WAIT_FOR_DATA_TO_BE_READY:
     //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
 	SBCO      r3, CONST_PRUDRAM, 12, 4
 
-	mov ARG_0.b0, 0xD0
+	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x3F
 	call READ_BYTE
 	mov r3, RET_VAL_0
@@ -192,7 +192,7 @@ WAIT_FOR_DATA_TO_BE_READY:
     //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
 	SBCO      r3, CONST_PRUDRAM, 16, 4
 
-	mov ARG_0.b0, 0xD0
+	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x43
 	call READ_BYTE
 	mov r3, RET_VAL_0
@@ -203,7 +203,7 @@ WAIT_FOR_DATA_TO_BE_READY:
     //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
 	SBCO      r3, CONST_PRUDRAM, 20, 4
 
-	mov ARG_0.b0, 0xD0
+	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x45
 	call READ_BYTE
 	mov r3, RET_VAL_0
@@ -214,7 +214,7 @@ WAIT_FOR_DATA_TO_BE_READY:
     //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
 	SBCO      r3, CONST_PRUDRAM, 24, 4
 
-	mov ARG_0.b0, 0xD0
+	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x47
 	call READ_BYTE
 	mov r3, RET_VAL_0
@@ -261,7 +261,8 @@ READ_BYTE:
 		
 	sub SP_reg, SP_reg, 8
 	sbco R0, CONST_PRUDRAM, SP_reg, 8
-	
+
+	lsl ARG_0.b0, ARG_0.b0, 1 //make room for the r/w bit
 
 
 	call SEND_START //send the start code
@@ -416,6 +417,8 @@ WRITE_BYTE:
 	
 	sub SP_reg, SP_reg, 8
 	sbco R0, CONST_PRUDRAM, SP_reg, 8
+
+	lsl ARG_0.b0, ARG_0.b0, 1 //make room for the r/w bit
 
 	call SEND_START //send the start code
 	and r1.b0, ARG_0.b0, 0xFE //clear the r/w bit (we are writing now)
