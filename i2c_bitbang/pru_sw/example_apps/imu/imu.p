@@ -57,7 +57,7 @@
 // *****************************************************************************/
 
 #include "imu.hp"
-#define RA_REG 			R30 //return address register
+#define RA_REG 			R30.w0 //return address register
 .setcallreg 			RA_REG
 .origin 0
 .entrypoint IMU_MAIN
