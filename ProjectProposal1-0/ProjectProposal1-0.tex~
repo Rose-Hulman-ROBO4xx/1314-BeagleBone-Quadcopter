@@ -1,0 +1,44 @@
+\documentclass[a4paper,10pt]{scrartcl}
+\usepackage[utf8]{inputenc}
+
+%opening
+\title{Quadcopter Project Proposal}
+\subtitle{ROBO 410 Dr. Mark Yoder}
+\author{Team Bone and Team Sky: \\
+	Bryce Filho () \\
+	Chris Hopwood () \\
+	Michael McDonald (mcdonamp@rose-hulman.edu) \\
+	Shawn Mitchell () \\
+	Daniel Nam () \\
+	Ryan Oliver () \\
+	Justin Stone () \\
+	Elias White () \\
+	}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We can go ahead and toss our elevator statement here, might as well.
+\end{abstract}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Executive Summary}
+
+\section{Walkthrough}
+
+\section{Domain Model}
+
+\section{Stakeholder Model}
+
+\section{State Model}
+
+\section{Logical Architecture}
+
+\end{document}
