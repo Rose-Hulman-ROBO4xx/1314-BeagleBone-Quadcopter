@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.9.7)  23 SEP 2013 01:51
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.9.7)  23 SEP 2013 23:45
 entering extended mode
  %&-line parsing enabled.
 **ProjectProposal1-0.tex
@@ -357,26 +357,47 @@ Class scrartcl Info: You've told me to use the font selection of the element
 Class scrartcl Info: You've told me to use the font selection of the element
 (scrartcl)           `sectioning' that is an alias of element `disposition'
 (scrartcl)            on input line 6.
+Class scrartcl Info: You've told me to use the font selection of the element
+(scrartcl)           `sectioning' that is an alias of element `disposition'
+(scrartcl)            on input line 7.
 )
 \tf@toc=\write3
 \openout3 = `ProjectProposal1-0.toc'.
 
- [2] [3] (./ProjectProposal1-0.aux) ) 
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 28.
+ [2] [3]
+Underfull \hbox (badness 10000) in paragraph at lines 56--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--75
+
+ []
+
+[4] [5] [6] [7] [8] (./ProjectProposal1-0.aux) ) 
 Here is how much of TeX's memory you used:
- 1314 strings out of 495061
- 18841 string characters out of 1182622
- 86562 words of memory out of 3000000
- 4534 multiletter control sequences out of 15000+50000
- 6034 words of font info for 22 fonts, out of 3000000 for 9000
+ 1317 strings out of 495061
+ 18876 string characters out of 1182622
+ 88562 words of memory out of 3000000
+ 4536 multiletter control sequences out of 15000+50000
+ 6342 words of font info for 23 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
- 36i,6n,43p,259b,216s stack positions out of 5000i,500n,10000p,200000b,50000s
-</usr/share/texmf-texlive/fonts/type1/publ
+ 36i,9n,43p,259b,238s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/share/texmf-texlive/fonts
+/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf-texlive/fonts/type1/publ
 ic/amsfonts/cm/cmr10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/
 cm/cmr12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmssbx10.
 pfb>
-Output written on ProjectProposal1-0.pdf (3 pages, 47680 bytes).
+Output written on ProjectProposal1-0.pdf (8 pages, 70344 bytes).
 PDF statistics:
- 24 PDF objects out of 1000 (max. 8388607)
+ 45 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
