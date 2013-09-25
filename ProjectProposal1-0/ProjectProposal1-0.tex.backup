@@ -1,18 +1,19 @@
 \documentclass[a4paper,10pt]{scrartcl}
 \usepackage[utf8]{inputenc}
+\usepackage{graphicx}
 
 %opening
 \title{Quadcopter Project Proposal}
 \subtitle{ROBO 410 Dr. Mark Yoder}
 \author{Team Bone and Team Sky: \\
 	{\normalsize Bryce Filho (filhobc@rose-hulman.edu) }\\
-	{\normalsize Chris Hopwood () }\\
+	{\normalsize Chris Hopwood (hopwoocp@rose-hulman.edu) }\\
 	{\normalsize Michael McDonald (mcdonamp@rose-hulman.edu) }\\
-	{\normalsize Shawn Mitchell () }\\
-	{\normalsize Daniel Nam () }\\
-	{\normalsize Ryan Oliver () }\\
-	{\normalsize Justin Stone () }\\
-	{\normalsize Elias White () }\\
+	{\normalsize Shawn Mitchell (mitchesm@rose-hulman.edu) }\\
+	{\normalsize Daniel Nam (namdw@rose-hulman.edu) }\\
+	{\normalsize Ryan Oliver (oliverr@rose-hulman.edu) }\\
+	{\normalsize Justin Stone (stonejp@rose-hulman.edu) }\\
+	{\normalsize Elias White (whiteer@rose-hulman.edu) }\\
 	}
 
 \begin{document}
@@ -86,14 +87,110 @@ the reputation of TI and the BeagleBone.
 
 \newpage
 \section{Domain Model}
+\begin{figure}[h]
+ \centering
+ \includegraphics[scale=0.5]{./DomainModel.png}
+ % Domain Model.png: 960x720 pixel, 72dpi, 33.87x25.40 cm, bb=0 0 960 720
+ \caption{Domain Model}
+\end{figure}
 
 \newpage
 \section{Stakeholder Model}
+\begin{center}
+\begin{tabular}{| l | p{7.5cm} |}
+\hline
+\textbf{Stakeholder} & \textbf{Features}\\
+\hline
+Dr. Mark Yoder and Rose-Hulman & \emph{Documentation}: should be reproducible,
+allow for easy future use and modification\newline
+\emph{Manufacturing Cost and Time}: should be a completed product within spec
+and budget, maintain/improve relationship with Texas Instruments\newline
+\emph{Safety}: should be safe to build/test, as well as operate in the
+future\newline
+\emph{Operation Costs}: should not require special equipment or additional
+overhead to use in the future\\
+\hline
+Jason Kridner and Texas Instruments & \emph{Customization}: should allow for
+user customization, act as a marketing tool to sell additional TI products
+\emph{Documentation}: should be reproducible, portable to other TI
+controllers/launchpads\newline
+\emph{Manufacturing Cost and Time}: should be cheap and quick to manufacture in
+order to sell at a reasonable price and be more appealing than building a
+quadcopter from scratch\\
+\hline
+CircuitCo & Customization: should allow for expansion, without interfering with
+original design and manufacturing process, may provide other manufacturing/sales
+opportunities
+Durability: should be well-designed and not require replacements under warranty
+for normal usage
+Manufacturing Cost and Time: should be efficient to manufacture, minimal waste
+Maintenance: should not require extensive hardware support
+Packaging: should fit into a standard package and minimize inventory space, be
+easy to ship individually and in bulk
+Regulatory Compliance: should be designed to meet regulations and not interfere
+with or delay the manufacturing process\\
+\hline
+Hobbyist Community & Customization: should act as a platform for design and
+experimentation, should be easy to incorporate other projects, remain open
+source
+Durability: should be able to withstand testing and experimentation, avoid
+severely damaging components
+Maintenance: should be supported into its life cycle, offer replacement parts or
+firmware updates
+Safety: should not be a hazard to the operator or bystanders, or be
+unnecessarily dangerous to modify
+Reliability: both hardware and software should be robust, as countless hours and
+funds may be invested into projects revolving around the product
+Ease of Use: should be easy to operate and interface with, more appealing than
+building a quadcopter from scratch
+Operation Costs: should not require special equipment or additional overhead to
+use in the future\\
+\hline
+Educational Community & Customization: should act as a platform for design and
+experimentation, should be easy to incorporate other projects, remain open
+source
+Durability: should be able to withstand testing and experimentation, avoid
+severely damaging components, resistant to student misuse
+Maintenance: should be supported into its life cycle, offer replacement parts or
+firmware updates, should require minimal technical knowledge to keep product
+operational
+Safety: should not be a hazard to the operator or bystanders, or be
+unnecessarily dangerous to modify, should be safe to use around
+children/students
+Reliability: both hardware and software should be robust, as countless hours and
+funds may be invested into projects revolving around the product
+Ease of Use: should be easy to operate and interface with, more appealing than
+building a quadcopter from scratch, should require minimal technical knowledge
+to operate the completed product
+Operation Costs: should not require special equipment or additional overhead to
+use in the future\\
+\hline
+Regional Community & Environment Friendly: should not harm the environment
+through operation, provide options for disposal or recycling
+Safety: should be safe to operate within a community, on a larger scale \\
+\hline
+\end{tabular}
+\end{center}
+
 
 \newpage
 \section{State Model}
+\begin{figure}[h]
+ \centering
+ \includegraphics[scale=0.5]{./StateDiagram.png}
+ % State Diagram.png: 960x720 pixel, 72dpi, 33.87x25.40 cm, bb=0 0 960 720
+ \caption{State Diagram}
+\end{figure}
+
 
 \newpage
 \section{Logical Architecture}
+\begin{figure}[h]
+ \centering
+ \includegraphics[scale=0.5]{./Logicblockdiagram.png}
+ % Logic block diagram.png: 960x720 pixel, 72dpi, 33.87x25.40 cm, bb=0 0 960 720
+ \caption{Logical Architecture}
+\end{figure}
+
 
 \end{document}

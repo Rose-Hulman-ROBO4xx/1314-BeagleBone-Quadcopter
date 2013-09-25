@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.9.7)  23 SEP 2013 23:45
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.9.7)  24 SEP 2013 23:34
 entering extended mode
  %&-line parsing enabled.
 **ProjectProposal1-0.tex
@@ -316,29 +316,65 @@ Now handling font encoding U ...
    defining Unicode char U+2122 (decimal 8482)
    defining Unicode char U+2423 (decimal 9251)
 ))
+(/usr/share/texmf-texlive/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-texlive/tex/latex/graphics/graphics.sty
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-texlive/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/etc/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2009/08/28 v1.8 graphics configuration of TeX Live
+)
+Package graphics Info: Driver file: pdftex.def on input line 91.
+
+(/usr/share/texmf-texlive/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2010/03/12 v0.04p Graphics/color for pdfTeX
+\Gread@gobject=\count88
+))
+\Gin@req@height=\dimen103
+\Gin@req@width=\dimen104
+)
 (./ProjectProposal1-0.aux)
 \openout1 = `ProjectProposal1-0.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 18.
-LaTeX Font Info:    ... okay on input line 18.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 18.
-LaTeX Font Info:    ... okay on input line 18.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 18.
-LaTeX Font Info:    ... okay on input line 18.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 18.
-LaTeX Font Info:    ... okay on input line 18.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 18.
-LaTeX Font Info:    ... okay on input line 18.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 18.
-LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+
+(/usr/share/texmf-texlive/tex/context/base/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count89
+\scratchdimen=\dimen105
+\scratchbox=\box27
+\nofMPsegments=\count90
+\nofMParguments=\count91
+\everyMPshowfont=\toks17
+\MPscratchCnt=\count92
+\MPscratchDim=\dimen106
+\MPnumerator=\count93
+\everyMPtoPDFconversion=\toks18
+)
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <14.4> on input line 21.
+(Font)              <14.4> on input line 22.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 21.
+(Font)              <7> on input line 22.
  [1
 
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./ProjectProposal1-0.toc
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+(./ProjectProposal1-0.toc
 Class scrartcl Info: You've told me to use the font selection of the element
 (scrartcl)           `sectioning' that is an alias of element `disposition'
 (scrartcl)            on input line 1.
@@ -357,47 +393,112 @@ Class scrartcl Info: You've told me to use the font selection of the element
 Class scrartcl Info: You've told me to use the font selection of the element
 (scrartcl)           `sectioning' that is an alias of element `disposition'
 (scrartcl)            on input line 6.
-Class scrartcl Info: You've told me to use the font selection of the element
-(scrartcl)           `sectioning' that is an alias of element `disposition'
-(scrartcl)            on input line 7.
 )
 \tf@toc=\write3
 \openout3 = `ProjectProposal1-0.toc'.
 
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 28.
+(Font)              <5> on input line 29.
  [2] [3]
-Underfull \hbox (badness 10000) in paragraph at lines 56--61
+Underfull \hbox (badness 10000) in paragraph at lines 57--62
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 62--68
+Underfull \hbox (badness 10000) in paragraph at lines 63--69
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 69--75
+Underfull \hbox (badness 10000) in paragraph at lines 70--76
 
  []
 
-[4] [5] [6] [7] [8] (./ProjectProposal1-0.aux) ) 
+[4] <./DomainModel.png, id=18, 963.6pt x 722.7pt>
+File: ./DomainModel.png Graphic file (type png)
+ <use ./DomainModel.png>
+Overfull \hbox (108.35637pt too wide) in paragraph at lines 92--94
+ [][] 
+ []
+
+[5 <./DomainModel.png>]
+Underfull \hbox (badness 1831) in paragraph at lines 104--112
+\OT1/cmr/m/n/10 tain/improve re-la-tion-ship with Texas In-stru-
+ []
+
+
+Underfull \hbox (badness 1231) in paragraph at lines 104--112
+\OT1/cmr/m/it/10 Operation Costs\OT1/cmr/m/n/10 : should not re-quire spe-cial
+ []
+
+
+Underfull \hbox (badness 2818) in paragraph at lines 113--120
+\OT1/cmr/m/n/10 tion, act as a mar-ket-ing tool to sell ad-
+ []
+
+
+Underfull \hbox (badness 1117) in paragraph at lines 113--120
+\OT1/cmr/m/n/10 di-tional TI prod-ucts \OT1/cmr/m/it/10 Doc-u-men-ta-tion\OT1/c
+mr/m/n/10 : should
+ []
+
+
+Underfull \hbox (badness 2119) in paragraph at lines 113--120
+\OT1/cmr/m/n/10 be re-pro-ducible, portable to other TI con-
+ []
+
+
+Overfull \hbox (29.39795pt too wide) in paragraph at lines 100--135
+ [] 
+ []
+
+[6]
+Underfull \hbox (badness 1231) in paragraph at lines 141--157
+\OT1/cmr/m/it/10 Operation Costs\OT1/cmr/m/n/10 : should not re-quire spe-cial
+ []
+
+
+Underfull \hbox (badness 1231) in paragraph at lines 158--177
+\OT1/cmr/m/it/10 Operation Costs\OT1/cmr/m/n/10 : should not re-quire spe-cial
+ []
+
+
+Overfull \vbox (70.59998pt too high) has occurred while \output is active []
+
+
+[7] <./StateDiagram.png, id=32, 963.6pt x 722.7pt>
+File: ./StateDiagram.png Graphic file (type png)
+ <use ./StateDiagram.png>
+Overfull \hbox (108.35637pt too wide) in paragraph at lines 190--192
+ [][] 
+ []
+
+[8 <./StateDiagram.png>] <./Logicblockdiagram.png, id=37, 963.6pt x 722.7pt>
+File: ./Logicblockdiagram.png Graphic file (type png)
+
+<use ./Logicblockdiagram.png>
+Overfull \hbox (108.35637pt too wide) in paragraph at lines 200--202
+ [][] 
+ []
+
+[9 <./Logicblockdiagram.png>] (./ProjectProposal1-0.aux) ) 
 Here is how much of TeX's memory you used:
- 1317 strings out of 495061
- 18876 string characters out of 1182622
- 88562 words of memory out of 3000000
- 4536 multiletter control sequences out of 15000+50000
- 6342 words of font info for 23 fonts, out of 3000000 for 9000
+ 2005 strings out of 495061
+ 28072 string characters out of 1182622
+ 102901 words of memory out of 3000000
+ 5198 multiletter control sequences out of 15000+50000
+ 6688 words of font info for 24 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
  36i,9n,43p,259b,238s stack positions out of 5000i,500n,10000p,200000b,50000s
-</usr/share/texmf-texlive/fonts
-/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf-texlive/fonts/type1/publ
-ic/amsfonts/cm/cmr10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/
-cm/cmr12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmssbx10.
-pfb>
-Output written on ProjectProposal1-0.pdf (8 pages, 70344 bytes).
+</usr/share/texmf-tex
+live/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texmf-texlive/fonts/
+type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-texlive/fonts/type1/public
+/amsfonts/cm/cmr12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm
+/cmssbx10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmti10.p
+fb>
+Output written on ProjectProposal1-0.pdf (9 pages, 252276 bytes).
 PDF statistics:
- 45 PDF objects out of 1000 (max. 8388607)
+ 59 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 16 words of extra memory for PDF output out of 10000 (max. 10000000)
 
