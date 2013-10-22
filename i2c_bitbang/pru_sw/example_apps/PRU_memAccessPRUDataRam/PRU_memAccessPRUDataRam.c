@@ -139,7 +139,10 @@ int main (void)
     /* Execute example on PRU */
     printf("\tINFO: Executing example.\r\n");
     prussdrv_exec_program (PRU_NUM, "./PRU_memAccessPRUDataRam.bin");
-    
+    while(1){
+	    signed short x = pruDataMem_int[2];
+	    printf("%d\n",  x);
+    }
     
     /* Wait until PRU0 has finished execution */
     printf("\tINFO: Waiting for HALT command.\r\n");

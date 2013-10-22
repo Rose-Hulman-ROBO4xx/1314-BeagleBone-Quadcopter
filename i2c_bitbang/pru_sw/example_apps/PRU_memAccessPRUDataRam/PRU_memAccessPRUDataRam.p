@@ -56,27 +56,41 @@
 //  version    0.1     Created
 // *****************************************************************************/
 
-#define RA_REG R30.w0 //return address register
-.setcallreg RA_REG
+#include "PRU_memAccessPRUDataRam.hp"
+#define RA_REG 			R30.w0 //return address register
+.setcallreg 			RA_REG
 .origin 0
 .entrypoint MEMACCESSPRUDATARAM
 
-#include "PRU_memAccessPRUDataRam.hp"
-#define SP_reg r20
+#define SP_reg 			r18
 
 #define GPIO1 0x4804c000
 #define GPIO0 0x44E07000
 
-#define GPIO_CLEARDATAOUT 0x190
-#define GPIO_SETDATAOUT 0x194
 
-#define SCL_BANK GPIO1
-#define SCL_BIT_NUMBER 28
+#define GPIO_OE			0x134
+#define GPIO_DATAIN		0x138
+#define GPIO_CLEARDATAOUT 	0x190
+#define GPIO_SETDATAOUT 	0x194
 
-#define SDA_BANK GPIO0
-#define SDA_BIT_NUMBER 30
-#define DELAY_TIME 50000000
-#define ARG_0 R21
+#define SCL_WRITE_BANK		GPIO1
+#define SCL_WRITE_BIT_NUMBER	28
+#define SCL_READ_BANK		GPIO1
+#define SCL_READ_BIT_NUMBER	18
+
+#define SDA_WRITE_BANK 		GPIO0
+#define SDA_WRITE_BIT_NUMBER	30
+#define SDA_READ_BANK		GPIO0
+#define SDA_READ_BIT_NUMBER	31
+
+#define DELAY_TIME 		500
+#define ARG_0 			R19
+#define ARG_1			R20
+#define ARG_2			R21
+#define RET_VAL_0		R22
+#define RET_VAL_1		R23
+#define RET_VAL_2		R24
+
 
 MEMACCESSPRUDATARAM:
       
@@ -91,15 +105,26 @@ MEMACCESSPRUDATARAM:
 
 #endif
 	mov SP_reg, 100 // set up the stack
-	call ENABLE_GPIO
-	mov r3, 500
+	call ENABLE_GPIO_AND_SET_DIRECTIONS
+
 	mov ARG_0.b0, 0xD0
 	mov ARG_0.b1, 0x6B
 	mov ARG_0.b2, 0x00
 	call WRITE_BYTE
 
+REPEAT_MEASURE:
+	mov ARG_0.b0, 0xD0
+	mov ARG_0.b1, 0x43
+	call READ_BYTE
+	mov r3, RET_VAL_0
+	lsl r3, r3, 8
+	mov ARG_0.b1, 0x44
+	call READ_BYTE
+	or r3, r3, RET_VAL_0
     //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-    SBCO      r3, CONST_PRUDRAM, 8, 4
+	SBCO      r3, CONST_PRUDRAM, 8, 4
+	jmp REPEAT_MEASURE
+
 #ifdef AM33XX	
 
     // Send notification to Host for program completion
@@ -112,6 +137,158 @@ MEMACCESSPRUDATARAM:
 #endif
 
     HALT
+//------------------------------------------------------------
+
+//this function will read a byte from an i2c device
+//ARG_0.b0 is the address
+//ARG_0.b1 is the reg number to read
+
+READ_BYTE:
+	sub SP_reg, SP_reg, 4
+	sbco RA_REG, CONST_PRUDRAM, SP_reg, 4
+	
+	sub SP_reg, SP_reg, 4
+	sbco ARG_0, CONST_PRUDRAM, SP_reg, 4
+		
+	sub SP_reg, SP_reg, 8
+	sbco R0, CONST_PRUDRAM, SP_reg, 8
+	
+
+
+	call SEND_START //send the start code
+	and r1.b0, ARG_0.b0, 0xFE //clear the r/w bit (we are writing now)
+	mov r1.b3, r1.b0 //save this address
+	mov r0.b0, 0
+READ_BYTE_LOOP1:
+	call CLEAR_SCL
+	call DELAY
+	
+	and ARG_0.b0, r1.b0, 0x80 //write_sda(address & 0x80)
+	call WRITE_SDA
+	LSL r1.b0, r1.b0, 1 //address = address << 1;
+	call DELAY
+	call SET_SCL
+	call DELAY
+	add r0.b0, r0.b0, 1 //i += 1
+	qbgt READ_BYTE_LOOP1, r0.b0, 8
+	
+	
+	
+
+	call CLEAR_SCL //clocking ack bit
+	call SET_SDA //gotta let the slave ack, so release sda
+	call DELAY
+	call SET_SCL //clock ack bit
+READ_BYTE_WAIT_FOR_ACK_1:
+	call READ_SDA
+	qbne READ_BYTE_WAIT_FOR_ACK_1, RET_VAL_0, 0
+	
+	call DELAY
+	call CLEAR_SCL
+	call DELAY
+	
+	
+	
+	//now write the register address
+	mov r1.b1, ARG_0.b1
+	mov r0.b0, 0
+READ_BYTE_LOOP2:
+	call CLEAR_SCL
+	call DELAY
+	
+	and ARG_0.b0, r1.b1, 0x80 //write_sda(register & 0x80)
+	call WRITE_SDA
+	LSL r1.b1, r1.b1, 1 //register = register << 1;
+	call DELAY
+	call SET_SCL
+	call DELAY
+	add r0.b0, r0.b0, 1 //i += 1
+	qbgt READ_BYTE_LOOP2, r0.b0, 8
+	
+	
+
+	call CLEAR_SCL //master needs to acknowledge the slave
+	call DELAY
+	call CLEAR_SDA
+	call DELAY
+	call SET_SCL
+	call DELAY
+	call CLEAR_SCL
+	call DELAY
+	call SET_SDA
+	call DELAY
+	call SET_SCL
+	call DELAY
+	
+	call SEND_START
+	
+
+	or r1.b0, r1.b3, 0x01 //clear the r/w bit (we are writing now)
+	mov r0.b0, 0
+READ_BYTE_LOOP3:
+	call CLEAR_SCL
+	call DELAY
+	
+	and ARG_0.b0, r1.b0, 0x80 //write_sda(address & 0x80)
+	call WRITE_SDA
+	LSL r1.b0, r1.b0, 1 //address = address << 1;
+	call DELAY
+	call SET_SCL
+	call DELAY
+	add r0.b0, r0.b0, 1 //i += 1
+	qbgt READ_BYTE_LOOP3, r0.b0, 8
+	
+	
+	
+	call CLEAR_SCL
+	call SET_SDA
+	call DELAY
+	call SET_SCL
+	call DELAY //TODO: supposed to be a wait for ack
+	call CLEAR_SCL
+	call DELAY
+
+	//now read the actuall data! yay!
+	
+	mov r0.b0, 0
+	mov r1, 0
+READ_BYTE_LOOP4:
+	call CLEAR_SCL
+	call DELAY
+	lsl r1, r1, 1
+	call READ_SDA
+	or r1, r1, RET_VAL_0
+	call DELAY
+	call SET_SCL
+	call DELAY
+	add r0.b0, r0.b0, 1
+	qbgt READ_BYTE_LOOP4, r0.b0, 8
+
+	
+	
+	call CLEAR_SCL
+	call DELAY
+	call SET_SDA
+	call DELAY
+	call SET_SCL
+	call DELAY
+	call CLEAR_SCL
+	call DELAY
+	call CLEAR_SDA
+	call SET_SCL
+	call SET_SDA
+	
+	mov RET_VAL_0, r1
+	
+	lbco R0, CONST_PRUDRAM, SP_reg, 8
+	add SP_reg, SP_reg, 8
+
+	lbco ARG_0, CONST_PRUDRAM, SP_reg, 4
+	add SP_reg, SP_reg, 4
+	
+	lbco RA_REG, CONST_PRUDRAM, SP_reg, 4
+	add SP_reg, SP_reg, 4
+	ret
 
 //------------------------------------------------------------
 WRITE_BYTE:
@@ -127,6 +304,9 @@ WRITE_BYTE:
 	// push the argument onto the stack
 	sub SP_reg, SP_reg, 4
 	sbco ARG_0, CONST_PRUDRAM, SP_reg, 4
+	
+	sub SP_reg, SP_reg, 8
+	sbco R0, CONST_PRUDRAM, SP_reg, 8
 
 	call SEND_START //send the start code
 	and r1.b0, ARG_0.b0, 0xFE //clear the r/w bit (we are writing now)
@@ -145,8 +325,82 @@ WRITE_BYTE_LOOP1:
 	add r0.b0, r0.b0, 1 //i += 1
 	qbgt WRITE_BYTE_LOOP1, r0.b0, 8
 	
+	call CLEAR_SCL //clocking ack bit
+	call SET_SDA //gotta let the slave ack, so release sda
+	call DELAY
+	call SET_SCL //clock ack bit
+
+WRITE_BYTE_WAIT_FOR_ACK_1:
+	call READ_SDA
+	qbne WRITE_BYTE_WAIT_FOR_ACK_1, RET_VAL_0, 0
 	
 	
+
+	call DELAY
+	call CLEAR_SCL
+	call DELAY
+	
+	//now write the register address
+	mov r1.b1, ARG_0.b1
+	mov r0.b0, 0
+WRITE_BYTE_LOOP2:
+	call CLEAR_SCL
+	call DELAY
+	
+	and ARG_0.b0, r1.b1, 0x80 //write_sda(register & 0x80)
+	call WRITE_SDA
+	LSL r1.b1, r1.b1, 1 //register = register << 1;
+	call DELAY
+	call SET_SCL
+	call DELAY
+	add r0.b0, r0.b0, 1 //i += 1
+	qbgt WRITE_BYTE_LOOP2, r0.b0, 8
+	
+	
+	call CLEAR_SCL //master needs to acknowledge the slave
+	call DELAY
+	call CLEAR_SDA
+	call DELAY
+	call SET_SCL
+	call DELAY
+	call CLEAR_SCL
+	call DELAY
+	call SET_SDA
+	call DELAY
+
+	
+	//now we can write the actual data! yay~! ^_^
+	mov r1.b2, ARG_0.b2
+	mov r0.b0, 0
+WRITE_BYTE_LOOP3:
+	call CLEAR_SCL
+	call DELAY
+	
+	and ARG_0.b0, r1.b2, 0x80 //write_sda(register & 0x80)
+	call WRITE_SDA
+	LSL r1.b2, r1.b2, 1 //register = register << 1;
+	call DELAY
+	call SET_SCL
+	call DELAY
+	add r0.b0, r0.b0, 1 //i += 1
+	qbgt WRITE_BYTE_LOOP3, r0.b0, 8
+	
+	call CLEAR_SCL
+	call DELAY
+	call CLEAR_SDA
+	call DELAY
+	call SET_SCL
+	call DELAY
+	call CLEAR_SCL
+	call DELAY
+	call SET_SCL
+	call DELAY
+	call SET_SDA
+	call DELAY
+	
+	lbco R0, CONST_PRUDRAM, SP_reg, 8
+	add SP_reg, SP_reg, 8
+
 	lbco ARG_0, CONST_PRUDRAM, SP_reg, 4
 	add SP_reg, SP_reg, 4
 	
@@ -169,6 +423,7 @@ WRITE_SDA_DONE:
 	lbco RA_REG, CONST_PRUDRAM, SP_reg, 4
 	add SP_reg, SP_reg, 4
 	ret
+	
 //------------------------------------------------------------
 SEND_START:
 	sub SP_reg, SP_reg, 4
@@ -199,22 +454,73 @@ DELAY_LOOP:
 	add SP_reg, SP_reg, 8
 	ret
 //--------------------------------------------------
-ENABLE_GPIO:
-	sub SP_reg, SP_reg, 4 //push r0 onto stack
-	sbco r0, CONST_PRUDRAM, SP_reg, 4
+ENABLE_GPIO_AND_SET_DIRECTIONS:
+	sub SP_reg, SP_reg, 8 //push r0 and r1 onto stack
+	sbco r0, CONST_PRUDRAM, SP_reg, 8
+
 	LBCO r0, C4, 4, 4 //do something for the gpio??? This is black magic to me. but it makes gpio work.
 	CLR r0, r0, 4
 	SBCO r0, C4, 4, 4
-	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 off of stack
-	add SP_reg, SP_reg, 4
+	
+	// set sda_write and scl_write pins to outputs
+	mov r1, SDA_WRITE_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, SDA_WRITE_BIT_NUMBER
+        sbbo r0, r1, 0, 4
+
+	mov r1, SCL_WRITE_BANK | GPIO_OE
+	clr r0, r0, SCL_WRITE_BIT_NUMBER
+	sbbo r0, r1, 0, 4
+	
+	// set sda_read and scl_read pins to inputs
+	mov r1, SDA_READ_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	set r0, r0, SDA_READ_BIT_NUMBER
+	sbbo r0, r1, 0, 4
+	mov r1, SCL_READ_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	set r0, r0, SCL_READ_BIT_NUMBER
+	sbbo r0, r1, 0, 4
+	
+	
+	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
+	add SP_reg, SP_reg, 8
 	RET
+//------------------------------------------------------------
+READ_SDA:
+	//using one of the retval registers because I don't want to have to touch the stack to save one of our gp registers
+	mov RET_VAL_0, SDA_READ_BANK | GPIO_DATAIN
+	lbbo RET_VAL_0, RET_VAL_0, 0, 4 //read the SDA line
+	qbbs READ_SDA_HIGH, RET_VAL_0, SDA_READ_BIT_NUMBER
+	mov RET_VAL_0, 0
+	jmp READ_SDA_DONE
+READ_SDA_HIGH:
+	mov RET_VAL_0, 1
+READ_SDA_DONE:
+	ret
+	
+//------------------------------------------------------------
+READ_SCL:
+	//using one of the retval registers because I don't want to have to touch the stack to save one of our gp registers
+	mov RET_VAL_0, SCL_READ_BANK | GPIO_DATAIN
+	lbbo RET_VAL_0, RET_VAL_0, 0, 4 //read the SDA line
+	qbbs READ_SCL_HIGH, RET_VAL_0, SCL_READ_BIT_NUMBER
+	mov RET_VAL_0, 0
+	jmp READ_SCL_DONE
+READ_SCL_HIGH:
+	mov RET_VAL_0, 1
+READ_SCL_DONE:
+	ret
+	
+	
+	
 //---------------------------------------------------
 SET_SDA:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
-	mov r0, 1 << SDA_BIT_NUMBER
-	mov r1, SDA_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	mov r0, 1 << SDA_WRITE_BIT_NUMBER
+	mov r1, SDA_WRITE_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
 	sbbo r0, r1, 0, 4 // write to the GPIO register location
 	lbco r0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
@@ -224,8 +530,8 @@ CLEAR_SDA:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
-	mov r0, 1 << SDA_BIT_NUMBER
-	mov r1, SDA_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	mov r0, 1 << SDA_WRITE_BIT_NUMBER
+	mov r1, SDA_WRITE_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
 	sbbo r0, r1, 0, 4 // write to the GPIO register location
 	lbco r0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
@@ -235,8 +541,8 @@ SET_SCL:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
-	mov r0, 1 << SCL_BIT_NUMBER
-	mov r1, SCL_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	mov r0, 1 << SCL_WRITE_BIT_NUMBER
+	mov r1, SCL_WRITE_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
 	sbbo r0, r1, 0, 4 // write to the GPIO register location
 	lbco r0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
@@ -246,8 +552,8 @@ CLEAR_SCL:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
-	mov r0, 1 << SCL_BIT_NUMBER
-	mov r1, SCL_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	mov r0, 1 << SCL_WRITE_BIT_NUMBER
+	mov r1, SCL_WRITE_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
 	sbbo r0, r1, 0, 4 // write to the GPIO register location
 	lbco r0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
