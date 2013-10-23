@@ -136,13 +136,26 @@ int main (void)
     printf("\tINFO: Initializing example.\r\n");
     LOCAL_exampleInit(PRU_NUM);
     
+    FILE * csv_out = fopen("out.csv", "w");
     /* Execute example on PRU */
     printf("\tINFO: Executing example.\r\n");
     prussdrv_exec_program (PRU_NUM, "./PRU_IMU.bin");
-    while(1){
-	    signed short x = pruDataMem_int[2];
-	    printf("%d\n",  x);
+
+    pruDataMem_int[0] = 1;
+    while(pruDataMem_int[0]){
+	printf("%d\n", pruDataMem_int[8]);
+	if (pruDataMem_int[1]){
+	    signed short x_a = pruDataMem_int[2];
+	    signed short y_a = pruDataMem_int[3];
+	    signed short z_a = pruDataMem_int[4];
+	    signed short x_g = pruDataMem_int[5];
+	    signed short y_g = pruDataMem_int[6];
+	    signed short z_g = pruDataMem_int[7];
+	    fprintf(csv_out, "%d,%d,%d,%d,%d,%d\n", x_a, y_a, z_a, x_g, y_g, z_g);
+	    pruDataMem_int[1] = 0;
+	}
     }
+    fclose(csv_out);
     
     /* Wait until PRU0 has finished execution */
     printf("\tINFO: Waiting for HALT command.\r\n");

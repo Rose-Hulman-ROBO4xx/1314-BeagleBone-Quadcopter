@@ -83,6 +83,9 @@
 #define SDA_READ_BANK		GPIO0
 #define SDA_READ_BIT_NUMBER	31
 
+#define IMU_INT_BANK		GPIO1
+#define IMU_INT_BIT_NUMBER	16
+
 #define DELAY_TIME 		500
 #define ARG_0 			R19
 #define ARG_1			R20
@@ -107,12 +110,59 @@ MEMACCESSPRUDATARAM:
 	mov SP_reg, 100 // set up the stack
 	call ENABLE_GPIO_AND_SET_DIRECTIONS
 
-	mov ARG_0.b0, 0xD0
+	mov ARG_0.b0, 0xD0 //wake up the device
 	mov ARG_0.b1, 0x6B
 	mov ARG_0.b2, 0x00
 	call WRITE_BYTE
+	
+	mov ARG_0.b0, 0xD0 //enable the interrupt pin on data_rdy
+	mov ARG_0.b1, 0x38
+	mov ARG_0.b2, 0x00
+	call WRITE_BYTE	
 
+	mov r5, 0
+	sbco r5, CONST_PRUDRAM, 32, 4
+	mov r4, 1000
 REPEAT_MEASURE:
+	
+WAIT_FOR_DATA_TO_BE_READY:
+	//call READ_IMU_INT
+	//qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
+	sbco r5, CONST_PRUDRAM, 32, 4
+
+	mov ARG_0.b0, 0xD0
+	mov ARG_0.b1, 0x3B
+	call READ_BYTE
+	mov r3, RET_VAL_0
+	lsl r3, r3, 8
+	mov ARG_0.b1, 0x3C
+	call READ_BYTE
+	or r3, r3, RET_VAL_0
+    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
+	SBCO      r3, CONST_PRUDRAM, 8, 4
+
+	mov ARG_0.b0, 0xD0
+	mov ARG_0.b1, 0x3D
+	call READ_BYTE
+	mov r3, RET_VAL_0
+	lsl r3, r3, 8
+	mov ARG_0.b1, 0x3E
+	call READ_BYTE
+	or r3, r3, RET_VAL_0
+    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
+	SBCO      r3, CONST_PRUDRAM, 12, 4
+
+	mov ARG_0.b0, 0xD0
+	mov ARG_0.b1, 0x3F
+	call READ_BYTE
+	mov r3, RET_VAL_0
+	lsl r3, r3, 8
+	mov ARG_0.b1, 0x40
+	call READ_BYTE
+	or r3, r3, RET_VAL_0
+    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
+	SBCO      r3, CONST_PRUDRAM, 16, 4
+
 	mov ARG_0.b0, 0xD0
 	mov ARG_0.b1, 0x43
 	call READ_BYTE
@@ -122,9 +172,38 @@ REPEAT_MEASURE:
 	call READ_BYTE
 	or r3, r3, RET_VAL_0
     //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 8, 4
-	jmp REPEAT_MEASURE
+	SBCO      r3, CONST_PRUDRAM, 20, 4
 
+	mov ARG_0.b0, 0xD0
+	mov ARG_0.b1, 0x45
+	call READ_BYTE
+	mov r3, RET_VAL_0
+	lsl r3, r3, 8
+	mov ARG_0.b1, 0x46
+	call READ_BYTE
+	or r3, r3, RET_VAL_0
+    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
+	SBCO      r3, CONST_PRUDRAM, 24, 4
+
+	mov ARG_0.b0, 0xD0
+	mov ARG_0.b1, 0x47
+	call READ_BYTE
+	mov r3, RET_VAL_0
+	lsl r3, r3, 8
+	mov ARG_0.b1, 0x48
+	call READ_BYTE
+	or r3, r3, RET_VAL_0
+    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
+	SBCO      r3, CONST_PRUDRAM, 28, 4
+
+	mov r3, 1
+	sbco r3, CONST_PRUDRAM, 4, 4
+
+	add r5, r5, 1
+	qbgt REPEAT_MEASURE, r5, r4
+	
+	mov r3, 0
+	sbco r3, CONST_PRUDRAM, 0, 4
 #ifdef AM33XX	
 
     // Send notification to Host for program completion
@@ -472,7 +551,7 @@ ENABLE_GPIO_AND_SET_DIRECTIONS:
 	clr r0, r0, SCL_WRITE_BIT_NUMBER
 	sbbo r0, r1, 0, 4
 	
-	// set sda_read and scl_read pins to inputs
+	// set sda_read and scl_read and INT_IMU pins to inputs
 	mov r1, SDA_READ_BANK | GPIO_OE
 	lbbo r0, r1, 0, 4
 	set r0, r0, SDA_READ_BIT_NUMBER
@@ -481,11 +560,29 @@ ENABLE_GPIO_AND_SET_DIRECTIONS:
 	lbbo r0, r1, 0, 4
 	set r0, r0, SCL_READ_BIT_NUMBER
 	sbbo r0, r1, 0, 4
-	
+
+	mov r1, IMU_INT_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	set r0, r0, IMU_INT_BIT_NUMBER
+	sbbo r0, r1, 0, 4
+
 	
 	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
 	add SP_reg, SP_reg, 8
 	RET
+//------------------------------------------------------------
+READ_IMU_INT:
+	//using one of the retval registers because I don't want to have to touch the stack to save one of our gp registers
+	mov RET_VAL_0, IMU_INT_BANK | GPIO_DATAIN
+	lbbo RET_VAL_0, RET_VAL_0, 0, 4 //read the SDA line
+	qbbs READ_IMU_INT_HIGH, RET_VAL_0, IMU_INT_BIT_NUMBER
+	mov RET_VAL_0, 0
+	jmp READ_IMU_INT_DONE
+READ_IMU_INT_HIGH:
+	mov RET_VAL_0, 1
+READ_IMU_INT_DONE:
+	ret
+	
 //------------------------------------------------------------
 READ_SDA:
 	//using one of the retval registers because I don't want to have to touch the stack to save one of our gp registers
