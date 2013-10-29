@@ -56,11 +56,11 @@
 //  version    0.1     Created
 // *****************************************************************************/
 
-#include "PRU_IMU.hp"
+#include "imu.hp"
 #define RA_REG 			R30.w0 //return address register
 .setcallreg 			RA_REG
 .origin 0
-.entrypoint MEMACCESSPRUDATARAM
+.entrypoint IMU_MAIN
 
 #define SP_reg 			r18
 
@@ -99,7 +99,7 @@
 #define RET_VAL_2		R24
 
 
-MEMACCESSPRUDATARAM:
+IMU_MAIN:
       
 #ifdef AM33XX
 
