@@ -84,7 +84,7 @@ SEND_PWM_PULSE:
 	mov r0, 0
 PWM_PULSE_LOOP_0:
 	add r0, r0, 1
-	qbgt PWM_PULSE_LOOP_0, r1, r0
+	qblt PWM_PULSE_LOOP_0, r1, r0
 	
 	call CLEAR_PWM_0
 	
