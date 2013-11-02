@@ -2,7 +2,7 @@ APP_DIRS :=
 
 APP_DIRS += imu
 APP_DIRS += pwm
-
+APP_DIRS += stop_pru
 ASSEM_FILES :=
 
 ASSEM_FILES += imu/imu.p
