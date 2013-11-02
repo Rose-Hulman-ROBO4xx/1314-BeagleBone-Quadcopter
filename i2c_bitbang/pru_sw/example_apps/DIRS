@@ -3,12 +3,14 @@ APP_DIRS :=
 APP_DIRS += imu
 APP_DIRS += pwm
 APP_DIRS += stop_pru
-ASSEM_FILES :=
+APP_DIRS += test_pru
 
+ASSEM_FILES :=
 ASSEM_FILES += imu/imu.p
 ASSEM_FILES += pwm/pwm.p
-
+ASSEM_FILES += test_pru/test.p
 BIN_FILES :=
 
 BIN_FILES += imu.bin
 BIN_FILES += pwm.bin
+BIN_FILES += test.bin
