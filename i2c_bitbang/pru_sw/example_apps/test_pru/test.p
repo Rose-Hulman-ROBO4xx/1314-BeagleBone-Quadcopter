@@ -111,6 +111,24 @@ IMU_MAIN:
     ST32      r0, r1
 
 #endif
+    mov r0, 1
+    sbco r0, CONST_PRUDRAM, 8, 4
+    
+    mov r1, GPIO1 | GPIO_OE
+    lbbo r0, r1, 0, 4
+    clr r0, r0, 28
+    sbbo r0, r1, 0, 4
+
+    mov r0, 2
+    sbco r0, CONST_PRUDRAM, 8, 4
+    
+    mov r0, GPIO1 | GPIO_SETDATAOUT
+    mov r1, 1 << 28
+    sbbo r1, r0, 0, 4
+
+
+
+
     mov r0, 5
     sbco r0, CONST_PRUDRAM, 8, 4
 #ifdef AM33XX	
