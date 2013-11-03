@@ -121,10 +121,15 @@ IMU_MAIN:
 
     mov r0, 2
     sbco r0, CONST_PRUDRAM, 8, 4
-    
-    mov r0, GPIO1 | GPIO_SETDATAOUT
-    mov r1, 1 << 28
-    sbbo r1, r0, 0, 4
+
+
+    MOV r2, 1<<28
+    MOV r3, GPIO1 | GPIO_SETDATAOUT
+    SBBO r2, r3, 0, 4
+
+//    mov r0, GPIO1 | GPIO_SETDATAOUT
+//    mov r1, 1 << 28
+//    sbbo r1, r0, 0, 4
 
 
 

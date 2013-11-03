@@ -42,14 +42,13 @@ PWM_MAIN:
 
 	mov SP_reg, 100 // set up the stack
 	//call ENABLE_GPIO_AND_SET_DIRECTIONS
-	mov r10, 0
-	mov r11, 10
 MAIN_PWM_LOOP:
-	add r10, r10, 1
-	mov ARG_0, 150000
+	lbco ARG_0,CONST_PRUDRAM, 8, 4
 	call SEND_PWM_PULSE
 	call DELAY
-	qblt MAIN_PWM_LOOP, r11, r10
+	
+	lbCo r0, CONST_PRUDRAM, 4, 4
+	qbne MAIN_PWM_LOOP, r0, 0
 	
 
     // Send notification to Host for program completion
@@ -89,9 +88,9 @@ PWM_PULSE_LOOP_0:
 	call CLEAR_PWM_0
 	
 	lbco r0, CONST_PRUDRAM, SP_reg, 8
-	sub SP_reg, SP_reg, 8
+	add SP_reg, SP_reg, 8
 	lbco RA_REG, CONST_PRUDRAM, SP_reg, 4
-	sub SP_reg, SP_reg, 4
+	add SP_reg, SP_reg, 4
 	
 	ret
 
@@ -137,7 +136,7 @@ RESET_PRU_CYCLE_COUNT_REGISTER:
 	
 
 //---------------------------------------------------
-SET_PWM_0:
+CLEAR_PWM_0:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
@@ -148,7 +147,7 @@ SET_PWM_0:
 	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
 	ret
 //------------------------------------------------------
-CLEAR_PWM_0:
+SET_PWM_0:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	

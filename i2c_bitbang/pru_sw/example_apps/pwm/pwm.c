@@ -60,7 +60,7 @@
 *****************************************************************************/
 
 #include <stdio.h>
-
+#include <stdlib.h>
 // Driver header file
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
@@ -135,11 +135,23 @@ int main (void)
     /* Initialize example */
     printf("\tINFO: Initializing example.\r\n");
     LOCAL_exampleInit(PRU_NUM);
+    pruDataMem_int[1] = 1;
+    pruDataMem_int[2] = 150000;
     
     /* Execute example on PRU */
     printf("\tINFO: Executing example.\r\n");
     prussdrv_exec_program (PRU_NUM, "./pwm.bin");
-   
+    while(pruDataMem_int[1] != 0){
+	int pos;
+	scanf("%d", &pos);
+	if (pos == 0){
+		break;
+	}
+	printf("%d\n", pos);
+	pruDataMem_int[2] = pos*1000;
+	
+	   
+    }
     /* Wait until PRU0 has finished execution */
     printf("\tINFO: Waiting for HALT command.\r\n");
     prussdrv_pru_wait_event (PRU_EVTOUT_0);

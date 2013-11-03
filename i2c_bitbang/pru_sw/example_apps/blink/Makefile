@@ -1,4 +1,4 @@
-CROSS_COMPILE?=arm-angstrom-linux-gnueabi-
+CROSS_COMPILE?=arm-arago-linux-gnueabi-
 
 LIBDIR_APP_LOADER?=../../app_loader/lib
 INCDIR_APP_LOADER?=../../app_loader/include
@@ -7,12 +7,12 @@ BINDIR?=../bin
 CFLAGS+= -Wall -I$(INCDIR_APP_LOADER) -D__DEBUG -O2 -mtune=cortex-a8 -march=armv7-a
 LDFLAGS+=-L$(LIBDIR_APP_LOADER) -lprussdrv -lpthread
 OBJDIR=obj
-TARGET=$(BINDIR)/imu
+TARGET=$(BINDIR)/blink
 
 _DEPS = 
 DEPS = $(patsubst %,$(INCDIR_APP_LOADER)/%,$(_DEPS))
 
-_OBJ = imu.o
+_OBJ = blink.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 
