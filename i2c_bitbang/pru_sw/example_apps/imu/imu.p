@@ -77,20 +77,16 @@
 #define GPIO_CLEARDATAOUT 	0x190
 #define GPIO_SETDATAOUT 	0x194
 
-#define SCL_WRITE_BANK		GPIO1
-#define SCL_WRITE_BIT_NUMBER	28
-#define SCL_READ_BANK		GPIO1
-#define SCL_READ_BIT_NUMBER	18
+#define SCL_BANK		GPIO1
+#define SCL_BIT			28
 
-#define SDA_WRITE_BANK 		GPIO0
-#define SDA_WRITE_BIT_NUMBER	30
-#define SDA_READ_BANK		GPIO0
-#define SDA_READ_BIT_NUMBER	31
+#define SDA_BANK 		GPIO0
+#define SDA_BIT			30
 
 #define IMU_INT_BANK		GPIO1
 #define IMU_INT_BIT_NUMBER	16
 
-#define DELAY_TIME 		50
+#define DELAY_TIME 		500
 #define ARG_0 			R19
 #define ARG_1			R20
 #define ARG_2			R21
@@ -114,27 +110,27 @@ IMU_MAIN:
 	mov SP_reg, 100 // set up the stack
 	call ENABLE_GPIO_AND_SET_DIRECTIONS
 
-	mov ARG_0.b0, 0xD0 //wake up the device
+	mov ARG_0.b0, 0x68 //wake up the device
 	mov ARG_0.b1, 0x6B
 	mov ARG_0.b2, 0x00
 	call WRITE_BYTE
 
-	mov ARG_0.b0, 0xD0	//configure the interrupt 
+	mov ARG_0.b0, 0x68	//configure the interrupt 
 	mov ARG_0.b1, 0x37
 	mov ARG_0.b2, 0b00110000
 	call WRITE_BYTE
 	
-	mov ARG_0.b0, 0xD0 //enable the interrupt pin on data_rdy
+	mov ARG_0.b0, 0x68 //enable the interrupt pin on data_rdy
 	mov ARG_0.b1, 0x38
 	mov ARG_0.b2, 0x01
 	call WRITE_BYTE	
 	
-	mov ARG_0.b0, 0xD0 //set the DLPF
+	mov ARG_0.b0, 0x68 //set the DLPF
 	mov ARG_0.b1, 0x1A
 	mov ARG_0.b2, 0x06
 	call WRITE_BYTE
 	
-	mov ARG_0.b0, 0xD0 //set the sample rate
+	mov ARG_0.b0, 0x68 //set the sample rate
 	mov ARG_0.b1, 0x19
 	mov ARG_0.b2, 0x01
 	call WRITE_BYTE
@@ -143,7 +139,7 @@ IMU_MAIN:
 
 	mov r5, 0
 	sbco r5, CONST_PRUDRAM, 32, 4
-	mov r4, 2000
+	mov r4, 10
 REPEAT_MEASURE:
 	
 WAIT_FOR_DATA_TO_BE_READY:
@@ -286,7 +282,7 @@ READ_BYTE_LOOP1:
 	
 
 	call CLEAR_SCL //clocking ack bit
-	call SET_SDA //gotta let the slave ack, so release sda
+	call RELEASE_SDA //gotta let the slave ack, so release sda
 	call DELAY
 	call SET_SCL //clock ack bit
 //READ_BYTE_WAIT_FOR_ACK_1:
@@ -319,13 +315,11 @@ READ_BYTE_LOOP2:
 
 	call CLEAR_SCL //master needs to acknowledge the slave
 	call DELAY
-	call CLEAR_SDA
+	call RELEASE_SDA
 	call DELAY
 	call SET_SCL
 	call DELAY
 	call CLEAR_SCL
-	call DELAY
-	call SET_SDA
 	call DELAY
 	call SET_SCL
 	call DELAY
@@ -351,7 +345,7 @@ READ_BYTE_LOOP3:
 	
 	
 	call CLEAR_SCL
-	call SET_SDA
+	call RELEASE_SDA
 	call DELAY
 	call SET_SCL
 	call DELAY //TODO: supposed to be a wait for ack
@@ -385,6 +379,7 @@ READ_BYTE_LOOP4:
 	call CLEAR_SCL
 	call DELAY
 	call CLEAR_SDA
+	call DELAY
 	call SET_SCL
 	call SET_SDA
 	
@@ -438,7 +433,7 @@ WRITE_BYTE_LOOP1:
 	qbgt WRITE_BYTE_LOOP1, r0.b0, 8
 	
 	call CLEAR_SCL //clocking ack bit
-	call SET_SDA //gotta let the slave ack, so release sda
+	call RELEASE_SDA //gotta let the slave ack, so release sda
 	call DELAY
 	call SET_SCL //clock ack bit
 
@@ -471,13 +466,11 @@ WRITE_BYTE_LOOP2:
 	
 	call CLEAR_SCL //master needs to acknowledge the slave
 	call DELAY
-	call CLEAR_SDA
+	call RELEASE_SDA //allow the slave to ack
 	call DELAY
 	call SET_SCL
 	call DELAY
 	call CLEAR_SCL
-	call DELAY
-	call SET_SDA
 	call DELAY
 
 	
@@ -575,25 +568,16 @@ ENABLE_GPIO_AND_SET_DIRECTIONS:
 	SBCO r0, C4, 4, 4
 	
 	// set sda_write and scl_write pins to outputs
-	mov r1, SDA_WRITE_BANK | GPIO_OE
+	mov r1, SDA_BANK | GPIO_OE
 	lbbo r0, r1, 0, 4
-	clr r0, r0, SDA_WRITE_BIT_NUMBER
+	clr r0, r0, SDA_BIT
         sbbo r0, r1, 0, 4
 
-	mov r1, SCL_WRITE_BANK | GPIO_OE
-	clr r0, r0, SCL_WRITE_BIT_NUMBER
+	mov r1, SCL_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, SCL_BIT
 	sbbo r0, r1, 0, 4
 	
-	// set sda_read and scl_read and INT_IMU pins to inputs
-	mov r1, SDA_READ_BANK | GPIO_OE
-	lbbo r0, r1, 0, 4
-	set r0, r0, SDA_READ_BIT_NUMBER
-	sbbo r0, r1, 0, 4
-	mov r1, SCL_READ_BANK | GPIO_OE
-	lbbo r0, r1, 0, 4
-	set r0, r0, SCL_READ_BIT_NUMBER
-	sbbo r0, r1, 0, 4
-
 	mov r1, IMU_INT_BANK | GPIO_OE
 	lbbo r0, r1, 0, 4
 	set r0, r0, IMU_INT_BIT_NUMBER
@@ -619,76 +603,99 @@ READ_IMU_INT_DONE:
 //------------------------------------------------------------
 READ_SDA:
 	//using one of the retval registers because I don't want to have to touch the stack to save one of our gp registers
-	mov RET_VAL_0, SDA_READ_BANK | GPIO_DATAIN
+	sub SP_reg, SP_reg, 8
+	sbco r0, CONST_PRUDRAM, SP_reg, 8
+	
+	
+	mov r1, SDA_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	set r0, r0, SDA_BIT
+	sbbo r0, r1, 0, 4
+
+
+	mov RET_VAL_0, SDA_BANK | GPIO_DATAIN
 	lbbo RET_VAL_0, RET_VAL_0, 0, 4 //read the SDA line
-	qbbs READ_SDA_HIGH, RET_VAL_0, SDA_READ_BIT_NUMBER
+	qbbs READ_SDA_HIGH, RET_VAL_0, SDA_BIT
 	mov RET_VAL_0, 0
 	jmp READ_SDA_DONE
 READ_SDA_HIGH:
 	mov RET_VAL_0, 1
 READ_SDA_DONE:
+	lbco r0, CONST_PRUDRAM, SP_reg, 8
+	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
+
 	ret
-	
-//------------------------------------------------------------
-READ_SCL:
-	//using one of the retval registers because I don't want to have to touch the stack to save one of our gp registers
-	mov RET_VAL_0, SCL_READ_BANK | GPIO_DATAIN
-	lbbo RET_VAL_0, RET_VAL_0, 0, 4 //read the SDA line
-	qbbs READ_SCL_HIGH, RET_VAL_0, SCL_READ_BIT_NUMBER
-	mov RET_VAL_0, 0
-	jmp READ_SCL_DONE
-READ_SCL_HIGH:
-	mov RET_VAL_0, 1
-READ_SCL_DONE:
-	ret
-	
 	
 	
 //---------------------------------------------------
-SET_SDA:
-	sub SP_reg, SP_reg, 8
-	sbco r0, CONST_PRUDRAM, SP_reg, 8
-	
-	mov r0, 1 << SDA_WRITE_BIT_NUMBER
-	mov r1, SDA_WRITE_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
-	sbbo r0, r1, 0, 4 // write to the GPIO register location
-	lbco r0, CONST_PRUDRAM, SP_reg, 8
-	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
-	ret
-//------------------------------------------------------
 CLEAR_SDA:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
-	mov r0, 1 << SDA_WRITE_BIT_NUMBER
-	mov r1, SDA_WRITE_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
-	sbbo r0, r1, 0, 4 // write to the GPIO register location
-	lbco r0, CONST_PRUDRAM, SP_reg, 8
-	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
-	ret
-//-----------------------------------------------------
-SET_SCL:
-	sub SP_reg, SP_reg, 8
-	sbco r0, CONST_PRUDRAM, SP_reg, 8
-	
-	mov r0, 1 << SCL_WRITE_BIT_NUMBER
-	mov r1, SCL_WRITE_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	mov r1, SDA_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, SDA_BIT
+	sbbo r0, r1, 0, 4
+
+
+	mov r0, 1 << SDA_BIT
+	mov r1, SDA_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
 	sbbo r0, r1, 0, 4 // write to the GPIO register location
 	lbco r0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
 	ret
 //------------------------------------------------------
-CLEAR_SCL:
+SET_SDA:
 	sub SP_reg, SP_reg, 8
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
-	mov r0, 1 << SCL_WRITE_BIT_NUMBER
-	mov r1, SCL_WRITE_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	mov r1, SDA_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, SDA_BIT
+	sbbo r0, r1, 0, 4
+
+	mov r0, 1 << SDA_BIT
+	mov r1, SDA_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
 	sbbo r0, r1, 0, 4 // write to the GPIO register location
 	lbco r0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
 	ret
 //-----------------------------------------------------
+CLEAR_SCL:
+	sub SP_reg, SP_reg, 8
+	sbco r0, CONST_PRUDRAM, SP_reg, 8
+	
+	mov r0, 1 << SCL_BIT
+	mov r1, SCL_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	sbbo r0, r1, 0, 4 // write to the GPIO register location
+	lbco r0, CONST_PRUDRAM, SP_reg, 8
+	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
+	ret
+//------------------------------------------------------
+SET_SCL:
+	sub SP_reg, SP_reg, 8
+	sbco r0, CONST_PRUDRAM, SP_reg, 8
+	
+	mov r0, 1 << SCL_BIT
+	mov r1, SCL_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
+	sbbo r0, r1, 0, 4 // write to the GPIO register location
+	lbco r0, CONST_PRUDRAM, SP_reg, 8
+	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
+	ret
+//-----------------------------------------------------
+RELEASE_SDA:
+	sub SP_reg, SP_reg, 8
+	sbco r0, CONST_PRUDRAM, SP_reg, 8
+	
+	mov r1, SDA_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	set r0, r0, SDA_BIT
+	sbbo r0, r1, 0, 4
+
+	lbco r0, CONST_PRUDRAM, SP_reg, 8
+	add SP_reg, SP_reg, 8
+	
+	ret
 
 
 
