@@ -86,7 +86,7 @@
 #define IMU_INT_BANK		GPIO1
 #define IMU_INT_BIT_NUMBER	16
 
-#define DELAY_TIME 		500
+#define DELAY_TIME 		50
 #define ARG_0 			R19
 #define ARG_1			R20
 #define ARG_2			R21
@@ -113,33 +113,33 @@ IMU_MAIN:
 	mov ARG_0.b0, 0x68 //wake up the device
 	mov ARG_0.b1, 0x6B
 	mov ARG_0.b2, 0x00
-	call WRITE_BYTE
+	//call WRITE_BYTE
 
 	mov ARG_0.b0, 0x68	//configure the interrupt 
 	mov ARG_0.b1, 0x37
 	mov ARG_0.b2, 0b00110000
-	call WRITE_BYTE
+	//call WRITE_BYTE
 	
 	mov ARG_0.b0, 0x68 //enable the interrupt pin on data_rdy
 	mov ARG_0.b1, 0x38
 	mov ARG_0.b2, 0x01
-	call WRITE_BYTE	
+	//call WRITE_BYTE	
 	
 	mov ARG_0.b0, 0x68 //set the DLPF
 	mov ARG_0.b1, 0x1A
 	mov ARG_0.b2, 0x06
-	call WRITE_BYTE
+	//call WRITE_BYTE
 	
 	mov ARG_0.b0, 0x68 //set the sample rate
 	mov ARG_0.b1, 0x19
 	mov ARG_0.b2, 0x01
-	call WRITE_BYTE
+	//call WRITE_BYTE
 
 	//configure tmp101
 
 	mov r5, 0
 	sbco r5, CONST_PRUDRAM, 32, 4
-	mov r4, 10
+	mov r4, 1000
 REPEAT_MEASURE:
 	
 WAIT_FOR_DATA_TO_BE_READY:
@@ -148,11 +148,11 @@ WAIT_FOR_DATA_TO_BE_READY:
 	
 
 	//read the tmp101
-	mov ARG_0.b0, 0x92
-	mov ARG_0.b1, 0x00
-	call READ_BYTE
-	mov r3, RET_VAL_0
-	sbco r3, CONST_PRUDRAM, 36, 4
+	//mov ARG_0.b0, 0x92
+	//mov ARG_0.b1, 0x00
+	//call READ_BYTE
+	//mov r3, RET_VAL_0
+	//sbco r3, CONST_PRUDRAM, 36, 4
 
 
 	mov ARG_0.b0, 0x68
@@ -311,23 +311,18 @@ READ_BYTE_LOOP2:
 	add r0.b0, r0.b0, 1 //i += 1
 	qbgt READ_BYTE_LOOP2, r0.b0, 8
 	
-	
-
-	call CLEAR_SCL //master needs to acknowledge the slave
-	call DELAY
 	call RELEASE_SDA
+	call DELAY
+	call CLEAR_SCL //master needs to acknowledge the slavea
 	call DELAY
 	call SET_SCL
 	call DELAY
 	call CLEAR_SCL
-	call DELAY
-	call SET_SCL
-	call DELAY
-	
+
 	call SEND_START
 	
 
-	or r1.b0, r1.b3, 0x01 //clear the r/w bit (we are writing now)
+	or r1.b0, r1.b3, 0x01 //set the r/w bit (we are reading now)
 	mov r0.b0, 0
 READ_BYTE_LOOP3:
 	call CLEAR_SCL
@@ -344,8 +339,8 @@ READ_BYTE_LOOP3:
 	
 	
 	
-	call CLEAR_SCL
 	call RELEASE_SDA
+	call CLEAR_SCL
 	call DELAY
 	call SET_SCL
 	call DELAY //TODO: supposed to be a wait for ack
@@ -353,6 +348,8 @@ READ_BYTE_LOOP3:
 	call DELAY
 
 	//now read the actuall data! yay!
+	call RELEASE_SDA
+	call DELAY
 	
 	mov r0.b0, 0
 	mov r1, 0
@@ -368,12 +365,7 @@ READ_BYTE_LOOP4:
 	add r0.b0, r0.b0, 1
 	qbgt READ_BYTE_LOOP4, r0.b0, 8
 
-	
-	
-	call CLEAR_SCL
-	call DELAY
 	call SET_SDA
-	call DELAY
 	call SET_SCL
 	call DELAY
 	call CLEAR_SCL
@@ -381,7 +373,9 @@ READ_BYTE_LOOP4:
 	call CLEAR_SDA
 	call DELAY
 	call SET_SCL
+	call DELAY
 	call SET_SDA
+	call DELAY
 	
 	mov RET_VAL_0, r1
 	
@@ -491,18 +485,17 @@ WRITE_BYTE_LOOP3:
 	qbgt WRITE_BYTE_LOOP3, r0.b0, 8
 	
 	call CLEAR_SCL
-	call DELAY
-	call CLEAR_SDA
+	call RELEASE_SDA
 	call DELAY
 	call SET_SCL
 	call DELAY
 	call CLEAR_SCL
+	call CLEAR_SDA
 	call DELAY
 	call SET_SCL
 	call DELAY
-	call SET_SDA
-	call DELAY
-	
+	call SET_SDA	
+
 	lbco R0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8
 
@@ -607,10 +600,10 @@ READ_SDA:
 	sbco r0, CONST_PRUDRAM, SP_reg, 8
 	
 	
-	mov r1, SDA_BANK | GPIO_OE
-	lbbo r0, r1, 0, 4
-	set r0, r0, SDA_BIT
-	sbbo r0, r1, 0, 4
+	//mov r1, SDA_BANK | GPIO_OE
+	//lbbo r0, r1, 0, 4
+	//set r0, r0, SDA_BIT
+	//sbbo r0, r1, 0, 4
 
 
 	mov RET_VAL_0, SDA_BANK | GPIO_DATAIN
