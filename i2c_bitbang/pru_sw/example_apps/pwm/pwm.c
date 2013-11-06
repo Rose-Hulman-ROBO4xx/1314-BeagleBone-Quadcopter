@@ -137,18 +137,20 @@ int main (void)
     LOCAL_exampleInit(PRU_NUM);
     pruDataMem_int[1] = 1;
     pruDataMem_int[2] = 150000;
+    pruDataMem_int[3] = 150000;
     
     /* Execute example on PRU */
     printf("\tINFO: Executing example.\r\n");
     prussdrv_exec_program (PRU_NUM, "./pwm.bin");
     while(pruDataMem_int[1] != 0){
-	int pos;
-	scanf("%d", &pos);
-	if (pos == 0){
+	int pos1, pos2;
+	scanf("%d %d", &pos1, &pos2);
+	if (pos1 == 0){
 		break;
 	}
-	printf("%d\n", pos);
-	pruDataMem_int[2] = pos*1000;
+	printf("%d %d\n", pos1, pos2);
+	pruDataMem_int[2] = pos1*1000;
+	pruDataMem_int[3] = pos2*1000;
 	
 	   
     }

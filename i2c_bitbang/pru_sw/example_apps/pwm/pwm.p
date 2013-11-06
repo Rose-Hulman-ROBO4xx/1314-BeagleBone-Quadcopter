@@ -19,8 +19,11 @@
 #define GPIO_CLEARDATAOUT 	0x190
 #define GPIO_SETDATAOUT 	0x194
 
-#define PWM_0_WRITE_BANK	GPIO1
-#define PWM_0_WRITE_BIT_NUMBER	28
+#define PWM_0_BANK		GPIO1
+#define PWM_0_BIT		28
+#define PWM_1_BANK		GPIO0
+#define PWM_1_BIT		30
+
 #define DELAY_TIME		2000000
 #define PRU_CONFIG		C4
 
@@ -41,9 +44,12 @@ PWM_MAIN:
 	ST32      r0, r1
 
 	mov SP_reg, 100 // set up the stack
-	//call ENABLE_GPIO_AND_SET_DIRECTIONS
+	call ENABLE_GPIO_AND_SET_DIRECTIONS
+
+
 MAIN_PWM_LOOP:
 	lbco ARG_0,CONST_PRUDRAM, 8, 4
+	lbco ARG_1,CONST_PRUDRAM, 12, 4
 	call SEND_PWM_PULSE
 	call DELAY
 	
@@ -75,20 +81,49 @@ SEND_PWM_PULSE:
 	//ARG_0: channel 0 high period
 	sub SP_reg, SP_reg, 4
 	sbco RA_REG, CONST_PRUDRAM, SP_reg, 4
-	sub SP_reg, SP_reg, 8
-	sbco r0, CONST_PRUDRAM, SP_reg, 8
+	sub SP_reg, SP_reg, 16
+	sbco r0, CONST_PRUDRAM, SP_reg, 16
+	//set the channel 0 and channel 1 high
+	mov r1, 1 << PWM_0_BIT
+	mov r2, PWM_0_BANK | GPIO_SETDATAOUT
+	sbbo r1, r2, 0, 4
+
+	mov r1,  1 << PWM_1_BIT
+	mov r2, PWM_1_BANK | GPIO_SETDATAOUT
+	sbbo r1, r2, 0, 4
+
+
 	
-	call SET_PWM_0
-	mov r1, ARG_0
-	mov r0, 0
-PWM_PULSE_LOOP_0:
+	mov r0, 0	//counting variable
+	mov r3, 0b00000011 //need to clear all these channels
+PWM_PULSE_LOOP:
 	add r0, r0, 1
-	qblt PWM_PULSE_LOOP_0, r1, r0
+	qblt SKIP_0, ARG_0, r0
+
+	mov r1,  1 << PWM_0_BIT
+	mov r2, PWM_0_BANK | GPIO_CLEARDATAOUT
+	sbbo r1, r2, 0, 4
+	clr r3, r3, 0
 	
-	call CLEAR_PWM_0
+	add r0, r0, 3
+SKIP_0:
+	add r0, r0, 1
+	qblt SKIP_1, ARG_1, r0
+
+	mov r1, 1 << PWM_1_BIT
+	mov r2, PWM_1_BANK | GPIO_CLEARDATAOUT
+	sbbo r1, r2, 0, 4
+	clr r3, r3, 1
+
+	add r0, r0, 3
+
+SKIP_1:
+	add r0, r0, 1
+	qbne PWM_PULSE_LOOP, r3, 0
+
 	
-	lbco r0, CONST_PRUDRAM, SP_reg, 8
-	add SP_reg, SP_reg, 8
+	lbco r0, CONST_PRUDRAM, SP_reg, 16
+	add SP_reg, SP_reg, 16
 	lbco RA_REG, CONST_PRUDRAM, SP_reg, 4
 	add SP_reg, SP_reg, 4
 	
@@ -105,9 +140,14 @@ ENABLE_GPIO_AND_SET_DIRECTIONS:
 	SBCO r0, C4, 4, 4
 	
 	// set sda_write and scl_write pins to outputs
-	mov r1, PWM_0_WRITE_BANK | GPIO_OE
+	mov r1, PWM_0_BANK | GPIO_OE
 	lbbo r0, r1, 0, 4
-	clr r0, r0, PWM_0_WRITE_BIT_NUMBER
+	clr r0, r0, PWM_0_BIT
+        sbbo r0, r1, 0, 4
+	
+	mov r1, PWM_1_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, PWM_1_BIT
         sbbo r0, r1, 0, 4
 	
 	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
@@ -115,47 +155,4 @@ ENABLE_GPIO_AND_SET_DIRECTIONS:
 	RET
 
 
-//---------------------------------------------------
-RESET_PRU_CYCLE_COUNT_REGISTER:
-	
-	lbco r0, PRU_CONFIG, 0, 4
-	clr r0, r0, 3 //clear the bit for the PRU_CYCLE_COUNTER
-	sbco r0, PRU_CONFIG, 0, 4
-	
-	//now clear the PRU_CYCLE_COUNTER
-	mov r0, 0
-	sbco r0, PRU_CONFIG, 0x0C, 4
-	
-	//now enable the PRU_CYCLE_COUNTER
-	
-	lbco r0, PRU_CONFIG, 0, 4
-	set r0, r0, 3
-	sbco r0, PRU_CONFIG, 0, 4
-
-	ret
-	
-
-//---------------------------------------------------
-CLEAR_PWM_0:
-	sub SP_reg, SP_reg, 8
-	sbco r0, CONST_PRUDRAM, SP_reg, 8
-	
-	mov r0, 1 << PWM_0_WRITE_BIT_NUMBER
-	mov r1, PWM_0_WRITE_BANK | GPIO_CLEARDATAOUT //connected to open collector, so this will allow sda to pull up to 1
-	sbbo r0, r1, 0, 4 // write to the GPIO register location
-	lbco r0, CONST_PRUDRAM, SP_reg, 8
-	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
-	ret
-//------------------------------------------------------
-SET_PWM_0:
-	sub SP_reg, SP_reg, 8
-	sbco r0, CONST_PRUDRAM, SP_reg, 8
-	
-	mov r0, 1 << PWM_0_WRITE_BIT_NUMBER
-	mov r1, PWM_0_WRITE_BANK | GPIO_SETDATAOUT //connected to open collector, so this will allow sda to pull up to 1
-	sbbo r0, r1, 0, 4 // write to the GPIO register location
-	lbco r0, CONST_PRUDRAM, SP_reg, 8
-	add SP_reg, SP_reg, 8 // pop the saved registers off the stack
-	ret
-//---------------------------------------------------------
 
