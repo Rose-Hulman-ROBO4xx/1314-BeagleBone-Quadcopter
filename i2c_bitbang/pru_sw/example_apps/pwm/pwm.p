@@ -105,7 +105,7 @@ PWM_PULSE_LOOP:
 	sbbo r1, r2, 0, 4
 	clr r3, r3, 0
 	
-	add r0, r0, 3
+	add r0, r0, 4
 SKIP_0:
 	add r0, r0, 1
 	qblt SKIP_1, ARG_1, r0
@@ -115,7 +115,7 @@ SKIP_0:
 	sbbo r1, r2, 0, 4
 	clr r3, r3, 1
 
-	add r0, r0, 3
+	add r0, r0, 4
 
 SKIP_1:
 	add r0, r0, 1
