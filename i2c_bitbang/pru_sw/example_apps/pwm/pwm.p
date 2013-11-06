@@ -24,7 +24,7 @@
 #define PWM_1_BANK		GPIO0
 #define PWM_1_BIT		30
 
-#define DELAY_TIME		2000000
+#define DELAY_TIME		500000
 #define PRU_CONFIG		C4
 
 #define ARG_0 			R19

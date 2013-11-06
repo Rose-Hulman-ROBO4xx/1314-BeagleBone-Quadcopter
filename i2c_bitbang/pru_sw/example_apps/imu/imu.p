@@ -139,7 +139,7 @@ IMU_MAIN:
 
 	mov r5, 0
 	sbco r5, CONST_PRUDRAM, 32, 4
-	mov r4, 1000
+	mov r4, 10
 REPEAT_MEASURE:
 	
 WAIT_FOR_DATA_TO_BE_READY:
@@ -458,14 +458,14 @@ WRITE_BYTE_LOOP2:
 	qbgt WRITE_BYTE_LOOP2, r0.b0, 8
 	
 	
-	call CLEAR_SCL //master needs to acknowledge the slave
+
+	call RELEASE_SDA
 	call DELAY
-	call RELEASE_SDA //allow the slave to ack
+	call CLEAR_SCL //master needs to acknowledge the slavea
 	call DELAY
 	call SET_SCL
 	call DELAY
 	call CLEAR_SCL
-	call DELAY
 
 	
 	//now we can write the actual data! yay~! ^_^
@@ -484,18 +484,18 @@ WRITE_BYTE_LOOP3:
 	add r0.b0, r0.b0, 1 //i += 1
 	qbgt WRITE_BYTE_LOOP3, r0.b0, 8
 	
-	call CLEAR_SCL
-	call RELEASE_SDA
-	call DELAY
+	call SET_SDA
 	call SET_SCL
 	call DELAY
 	call CLEAR_SCL
+	call DELAY
 	call CLEAR_SDA
 	call DELAY
 	call SET_SCL
 	call DELAY
-	call SET_SDA	
-
+	call SET_SDA
+	call DELAY
+	
 	lbco R0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8
 
