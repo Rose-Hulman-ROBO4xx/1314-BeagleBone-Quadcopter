@@ -118,33 +118,33 @@ IMU_MAIN:
 	mov ARG_0.b0, 0x68	//configure the interrupt 
 	mov ARG_0.b1, 0x37
 	mov ARG_0.b2, 0b00110000
-	//call WRITE_BYTE
+	call WRITE_BYTE
 	
 	mov ARG_0.b0, 0x68 //enable the interrupt pin on data_rdy
 	mov ARG_0.b1, 0x38
 	mov ARG_0.b2, 0x01
-	//call WRITE_BYTE
+	call WRITE_BYTE
 	
 	mov ARG_0.b0, 0x68 //set the DLPF
 	mov ARG_0.b1, 0x1A
 	mov ARG_0.b2, 0x06
-	//call WRITE_BYTE
+	call WRITE_BYTE
 
 	mov ARG_0.b0, 0x68 //set the sample rate
 	mov ARG_0.b1, 0x19
-	mov ARG_0.b2, 0x01
-	//call WRITE_BYTE
+	mov ARG_0.b2, 0x03
+	call WRITE_BYTE
 
 	//configure tmp101
 
 	mov r5, 0
 	sbco r5, CONST_PRUDRAM, 32, 4
-	mov r4, 10
+	mov r4, 1000
 REPEAT_MEASURE:
 
 WAIT_FOR_DATA_TO_BE_READY:
-	//call READ_IMU_INT
-	//qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
+	call READ_IMU_INT
+	qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
 
 
 	//read the tmp101
@@ -227,7 +227,6 @@ WAIT_FOR_DATA_TO_BE_READY:
 	add r5, r5, 1
 	
 	qbgt REPEAT_MEASURE, r5, r4
-HALT_LABEL:
 	mov r3, 0
 	sbco r3, CONST_PRUDRAM, 0, 4
 #ifdef AM33XX	
