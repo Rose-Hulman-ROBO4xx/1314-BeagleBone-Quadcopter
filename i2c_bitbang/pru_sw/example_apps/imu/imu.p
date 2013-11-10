@@ -113,7 +113,7 @@ IMU_MAIN:
 	mov ARG_0.b0, 0x68 //wake up the device
 	mov ARG_0.b1, 0x6B
 	mov ARG_0.b2, 0x00
-	//call WRITE_BYTE
+	call WRITE_BYTE
 
 	mov ARG_0.b0, 0x68	//configure the interrupt 
 	mov ARG_0.b1, 0x37
@@ -123,13 +123,13 @@ IMU_MAIN:
 	mov ARG_0.b0, 0x68 //enable the interrupt pin on data_rdy
 	mov ARG_0.b1, 0x38
 	mov ARG_0.b2, 0x01
-	//call WRITE_BYTE	
+	//call WRITE_BYTE
 	
 	mov ARG_0.b0, 0x68 //set the DLPF
 	mov ARG_0.b1, 0x1A
 	mov ARG_0.b2, 0x06
 	//call WRITE_BYTE
-	
+
 	mov ARG_0.b0, 0x68 //set the sample rate
 	mov ARG_0.b1, 0x19
 	mov ARG_0.b2, 0x01
@@ -141,11 +141,11 @@ IMU_MAIN:
 	sbco r5, CONST_PRUDRAM, 32, 4
 	mov r4, 10
 REPEAT_MEASURE:
-	
+
 WAIT_FOR_DATA_TO_BE_READY:
-	call READ_IMU_INT
-	qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
-	
+	//call READ_IMU_INT
+	//qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
+
 
 	//read the tmp101
 	//mov ARG_0.b0, 0x92
@@ -227,7 +227,7 @@ WAIT_FOR_DATA_TO_BE_READY:
 	add r5, r5, 1
 	
 	qbgt REPEAT_MEASURE, r5, r4
-	
+HALT_LABEL:
 	mov r3, 0
 	sbco r3, CONST_PRUDRAM, 0, 4
 #ifdef AM33XX	
@@ -427,7 +427,6 @@ WRITE_BYTE_LOOP1:
 	qbgt WRITE_BYTE_LOOP1, r0.b0, 8
 	
 	call CLEAR_SCL //clocking ack bit
-	call RELEASE_SDA //gotta let the slave ack, so release sda
 	call DELAY
 	call SET_SCL //clock ack bit
 
@@ -439,6 +438,7 @@ WRITE_BYTE_LOOP1:
 
 	call DELAY
 	call CLEAR_SCL
+	call RELEASE_SDA //gotta let the slave ack, so release 
 	call DELAY
 	
 	//now write the register address
@@ -457,15 +457,13 @@ WRITE_BYTE_LOOP2:
 	add r0.b0, r0.b0, 1 //i += 1
 	qbgt WRITE_BYTE_LOOP2, r0.b0, 8
 	
-	
-
-	call RELEASE_SDA
-	call DELAY
-	call CLEAR_SCL //master needs to acknowledge the slavea
-	call DELAY
-	call SET_SCL
-	call DELAY
-	call CLEAR_SCL
+	CALL CLEAR_SCL
+	CALL CLEAR_SDA
+	CALL DELAY
+	CALL SET_SCL
+	CALL DELAY
+	CALL CLEAR_SCL
+	CALL RELEASE_SDA
 
 	
 	//now we can write the actual data! yay~! ^_^
@@ -483,19 +481,19 @@ WRITE_BYTE_LOOP3:
 	call DELAY
 	add r0.b0, r0.b0, 1 //i += 1
 	qbgt WRITE_BYTE_LOOP3, r0.b0, 8
-	
-	call SET_SDA
-	call SET_SCL
-	call DELAY
-	call CLEAR_SCL
-	call DELAY
-	call CLEAR_SDA
-	call DELAY
-	call SET_SCL
-	call DELAY
-	call SET_SDA
-	call DELAY
-	
+
+	CALL CLEAR_SCL
+	CALL CLEAR_SDA
+	CALL DELAY
+	CALL SET_SCL
+	CALL DELAY
+	CALL CLEAR_SCL
+	CALL RELEASE_SDA
+	CALL DELAY
+	CALL SET_SCL
+	CALL DELAY
+	CALL SET_SDA
+
 	lbco R0, CONST_PRUDRAM, SP_reg, 8
 	add SP_reg, SP_reg, 8
 
