@@ -105,8 +105,8 @@ static unsigned short LOCAL_examplePassed ( unsigned short pruNum );
 * Global Variable Definitions                                                *
 *****************************************************************************/
 
-static void *pruDataMem;
-static unsigned int *pruDataMem_int;
+volatile static void *pruDataMem;
+volatile static unsigned int *pruDataMem_int;
 
 /*****************************************************************************
 * Global Function Definitions                                                *
@@ -143,8 +143,6 @@ int main (void)
 
     pruDataMem_int[0] = 1;
     while(pruDataMem_int[0]){
-	    int raw_temp = pruDataMem_int[9];
-	    printf("%d\n", raw_temp);
 	if (pruDataMem_int[1]){
 	    signed short x_a = pruDataMem_int[2];
 	    signed short y_a = pruDataMem_int[3];
@@ -153,6 +151,7 @@ int main (void)
 	    signed short y_g = pruDataMem_int[6];
 	    signed short z_g = pruDataMem_int[7];
 	    fprintf(csv_out, "%d,%d,%d,%d,%d,%d\n", x_a, y_a, z_a, x_g, y_g, z_g);
+	    printf("%d,%d,%d,%d,%d,%d\n", x_a, y_a, z_a, x_g, y_g, z_g);
 	    pruDataMem_int[1] = 0;
 	}
     }
@@ -163,16 +162,6 @@ int main (void)
     prussdrv_pru_wait_event (PRU_EVTOUT_0);
     printf("\tINFO: PRU completed transfer.\r\n");
     prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
-
-    /* Check if example passed */
-    if ( LOCAL_examplePassed(PRU_NUM) )
-    {
-        printf("INFO: Example executed succesfully.\r\n");
-    }
-    else
-    {
-        printf("INFO: Example failed.\r\n");
-    }
 
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable (PRU_NUM);
@@ -199,16 +188,6 @@ static int LOCAL_exampleInit ( unsigned short pruNum )
     }  
     pruDataMem_int = (unsigned int*) pruDataMem;
     
-    // Flush the values in the PRU data memory locations
-    pruDataMem_int[1] = 0x00;
-    pruDataMem_int[2] = 0x00;
-
     return(0);
 }		
-
-static unsigned short LOCAL_examplePassed ( unsigned short pruNum )
-{
-  printf("%d\n", pruDataMem_int[2]);
-  return ((pruDataMem_int[1] ==  ADDEND1) & (pruDataMem_int[2] ==  ADDEND1 + ADDEND2));
-}
 

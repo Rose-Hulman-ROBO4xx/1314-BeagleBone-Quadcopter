@@ -136,8 +136,8 @@ int main (void)
     printf("\tINFO: Initializing example.\r\n");
     LOCAL_exampleInit(PRU_NUM);
     pruDataMem_int[1] = 1;
-    pruDataMem_int[2] = 150000;
-    pruDataMem_int[3] = 150000;
+    pruDataMem_int[2] = 100000;
+    pruDataMem_int[3] = 100000;
     
     /* Execute example on PRU */
     printf("\tINFO: Executing example.\r\n");

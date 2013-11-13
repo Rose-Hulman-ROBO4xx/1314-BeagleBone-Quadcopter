@@ -77,11 +77,11 @@
 #define GPIO_CLEARDATAOUT 	0x190
 #define GPIO_SETDATAOUT 	0x194
 
-#define SCL_BANK		GPIO1
-#define SCL_BIT			28
+#define SCL_BANK		GPIO0
+#define SCL_BIT			31
 
-#define SDA_BANK 		GPIO0
-#define SDA_BIT			30
+#define SDA_BANK 		GPIO1
+#define SDA_BIT			18
 
 #define IMU_INT_BANK		GPIO1
 #define IMU_INT_BIT_NUMBER	16
