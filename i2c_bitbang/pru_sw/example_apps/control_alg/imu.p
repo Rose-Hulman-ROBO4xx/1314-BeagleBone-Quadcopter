@@ -2,112 +2,81 @@
 #include "conventions.hp"
 
 
-	//configure tmp101
+GET_IMU_DATA:
+	sub SP_reg, SP_reg, 4
+	sbco RA_REG, CONST_PRUDRAM, SP_reg, 4
 
-	mov r5, 0
-	sbco r5, CONST_PRUDRAM, 32, 4
-	mov r4, 1000
-REPEAT_MEASURE:
-
+	//make room for the data
+	sub SP_reg, SP_reg, 12
+	sbco r0, CONST_PRUDRAM, SP_reg, 12
+	
 WAIT_FOR_DATA_TO_BE_READY:
 	call READ_IMU_INT
 	qbeq WAIT_FOR_DATA_TO_BE_READY, RET_VAL_0, 0
 
 
-	//read the tmp101
-	//mov ARG_0.b0, 0x92
-	//mov ARG_0.b1, 0x00
-	//call READ_BYTE
-	//mov r3, RET_VAL_0
-	//sbco r3, CONST_PRUDRAM, 36, 4
-
-
 	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x3B
 	call READ_BYTE
-	mov r3, RET_VAL_0
-	lsl r3, r3, 8
+	mov r0.b1, RET_VAL_0
 	mov ARG_0.b1, 0x3C
 	call READ_BYTE
-	or r3, r3, RET_VAL_0
-    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 8, 4
+	mov r0.b0, RET_VAL_0
 
 	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x3D
 	call READ_BYTE
-	mov r3, RET_VAL_0
-	lsl r3, r3, 8
+	mov r0.b3, RET_VAL_0
 	mov ARG_0.b1, 0x3E
 	call READ_BYTE
-	or r3, r3, RET_VAL_0
-    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 12, 4
+	mov r0.b2, RET_VAL_0
 
 	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x3F
 	call READ_BYTE
-	mov r3, RET_VAL_0
-	lsl r3, r3, 8
+	mov r1.b1, RET_VAL_0
 	mov ARG_0.b1, 0x40
 	call READ_BYTE
-	or r3, r3, RET_VAL_0
-    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 16, 4
+	mov r1.b0, RET_VAL_0
 
 	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x43
 	call READ_BYTE
-	mov r3, RET_VAL_0
-	lsl r3, r3, 8
+	mov r1.b3, RET_VAL_0
 	mov ARG_0.b1, 0x44
 	call READ_BYTE
-	or r3, r3, RET_VAL_0
-    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 20, 4
+	mov r1.b2, RET_VAL_0
 
 	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x45
 	call READ_BYTE
-	mov r3, RET_VAL_0
-	lsl r3, r3, 8
+	mov r2.b1, RET_VAL_0
 	mov ARG_0.b1, 0x46
 	call READ_BYTE
-	or r3, r3, RET_VAL_0
-    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 24, 4
+	mov r2.b0, RET_VAL_0
 
 	mov ARG_0.b0, 0x68
 	mov ARG_0.b1, 0x47
 	call READ_BYTE
-	mov r3, RET_VAL_0
-	lsl r3, r3, 8
+	mov r2.b3, RET_VAL_0
 	mov ARG_0.b1, 0x48
 	call READ_BYTE
-	or r3, r3, RET_VAL_0
-    //Store result in into memory location c3(PRU0/1 Local Data)+8 using constant table
-	SBCO      r3, CONST_PRUDRAM, 28, 4
+	mov r2.b2, RET_VAL_0
 
-	mov r3, 1
-	sbco r3, CONST_PRUDRAM, 4, 4
+	mov RET_VAL_0, r0
+	mov RET_VAL_1, r1
+	mov RET_VAL_2, r2
 
-	add r5, r5, 1
+
+	//make room for the data
+	lbco r0, CONST_PRUDRAM, SP_reg, 12
+	add SP_reg, SP_reg, 12
 	
-	qbgt REPEAT_MEASURE, r5, r4
-	mov r3, 0
-	sbco r3, CONST_PRUDRAM, 0, 4
-#ifdef AM33XX	
+	lbco RA_REG, CONST_PRUDRAM, SP_reg, 4
+	add SP_reg, SP_reg, 4
 
-    // Send notification to Host for program completion
-    MOV R31.b0, PRU0_ARM_INTERRUPT+16
+	ret
 
-#else
-
-    MOV R31.b0, PRU0_ARM_INTERRUPT
-
-#endif
-
-    HALT
 //------------------------------------------------------------
 
 //this function will read a byte from an i2c device

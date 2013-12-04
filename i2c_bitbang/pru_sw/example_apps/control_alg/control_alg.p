@@ -18,6 +18,7 @@ CONTROL_MAIN:
 	call IMU_ENABLE_GPIO_AND_SET_DIRECTIONS
 
 
+
     // Send notification to Host for program completion
     MOV R31.b0, PRU0_ARM_INTERRUPT+16
     
