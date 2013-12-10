@@ -1,0 +1,14 @@
+[Unit]
+Description=Rose-Hulman ROBO 4X0 Quadcopter Server Service
+
+[Service]
+WorkingDirectory=/home/root/497Homework/Project
+ExecStart=/usr/bin/node quadServer.js
+SyslogIdentifier=boneserver
+
+[Service]
+Restart=always
+EnvironmentFile=-/etc/default/node
+
+[Install]
+WantedBy=multi-user.target
