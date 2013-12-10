@@ -8,7 +8,7 @@ var port = 1337, // Port to listen on
     http = require('http'),
     url = require('url'),
     fs = require('fs'),
-    b = require('bonescript'),
+    //b = require('bonescript'),
     child_process = require('child_process'),
     server,
     connectCount = 0,	// Number of connections to server
@@ -29,8 +29,7 @@ server = http.createServer(function (req, res) {
     }
 
     fs.readFile(__dirname + path, function (err, data) {
-        if (err) {return send404(res); }
-//            console.log("path2: " + path);
+        if (err) { return send404(res); }
         res.write(data, 'utf8');
         res.end();
     });
@@ -54,6 +53,11 @@ io.sockets.on('connection', function (socket) {
     /*
     This is where all of our handlers for button presses must go
     */
+
+    // Server side callback (via socket.io) for our test button
+    socket.on('testButtonPress', function () {
+        console.log("Test Button Pressed, for realzies!");
+    });
 
     // Boilerplate to deal with connection managing
     socket.on('disconnect', function () {
