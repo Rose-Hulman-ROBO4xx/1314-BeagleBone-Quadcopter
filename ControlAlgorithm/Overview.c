@@ -25,6 +25,7 @@
 	#define MOTORS_IDLE VALUE 	100
 	#define ESC_RATE		  	250 // Hz
 	#define GYRO_RATE			0.00077
+	#define DEGREESOFFREEDOM	6
 	
 	#define ACC_SMALL_ANGLE		40
 	
@@ -34,7 +35,7 @@
 	#define RXChannel_ELE		2
 	#define RXChannel_AIL		3
 	#define RXChannel_AUX		4
-	#define NumRXChannels		5
+	#define NUMRXCHANNELS		5
 	
 	#define ACC_I_MIN			4
 	#define PID_I_LEAK_RATE		0.01
@@ -48,7 +49,7 @@
 		int Ilimit;
 		int D;
 		int Dlimit;
-		int ComplementaryFilterAlpha; \\ 0 [no filter] to 999 [smoothest], should be very high (990-997)
+		int ComplementaryFilterAlpha; // 0 [no filter] to 999 [smoothest], should be very high (990-997)
 	} PIDparam;
 	
 	typedeft struct
@@ -56,7 +57,7 @@
 		float P;
 		float I;
 		float D;
-		float Error; \\ previous value
+		float Error; // previous value
 	} PIDterms
 	
 // Global Variables
@@ -64,8 +65,8 @@
 	PIDterms PIDAccParams[3];
 	PIDparam GyroParams[3];
 	PIDterms PIDGyroParams[3];
-	double SensorData[6]; // IMU data
-	double RXUser[NumRXChannels]; // user input
+	double SensorData[DEGREESOFFREEDOM]; // IMU data
+	double RXUser[NUMRXCHANNELS]; // user input
 	
 	double CompGyroRoll;
 	double CompGyroPitch;
@@ -94,18 +95,91 @@
 	bool acrobatMode;
 	bool userMode;
 	
-	int MotorOut[4];
-	int motorValue[4];
+	int MotorOut[NUMMOTORS];
+	int motorValue[NUMMOTORS];
 	bool stop; // true -> quadcopter lands smoothly
 	bool inMC;
 	
 // Methods
+
+	void Main()
+	{
+		InitMotorControl();
+		
+		while(1)
+		{
+			MotorControl();
+			if (stop) break;
+		}
+	}
 	
 	// TODO: call when quadcopter turned on
 	// TODO: Allow user to change some parameters
 	void InitMotorControl()
 	{
+		// ACC parameters
+		AccParams[PITCH_Index].P = 15;
+		AccParams[PITCH_Index].PLimit = 30;
+		AccParams[PITCH_Index].I = 8;
+		AccParams[PITCH_Index].ILimit = 15; 
+		AccParams[PITCH_Index].D = 1;
+		AccParams[PITCH_Index].DLimit = 20; 
+		AccParams[PITCH_Index].ComplementaryFilterAlpha = 995;
+		PIDAccParams[PITCH_Index].I = 0;
+		
+		AccParams[ROLL_Index].P = 15;
+		AccParams[ROLL_Index].PLimit = 30;
+		AccParams[ROLL_Index].I = 8;
+		AccParams[ROLL_Index].ILimit = 15;
+		AccParams[ROLL_Index].D = 1;
+		AccParams[ROLL_Index].DLimit = 20;
+		AccParams[ROLL_Index].ComplementaryFilterAlpha = 995;
+		PIDAccParams[ROLL_Index].I = 0;
+		
+		AccParams[Z_Index].P = 15;
+		AccParams[Z_Index].PLimit = 35;
+		AccParams[Z_Index].I = 0;
+		AccParams[Z_Index].ILimit = 10;
+		AccParams[Z_Index].D = 0;
+		AccParams[Z_Index].DLimit = 20;
+		AccParams[Z_Index].ComplementaryFilterAlpha = 200;
+		PIDAccParams[Z_Indez].I = 0;
+		
+		// Gyro parameters
+		GyroParams[PITCH_Index].P = 27;
+		GyroParams[PITCH_Index].PLimit = 60;
+		GyroParams[PITCH_Index].I = 0;
+		GyroParams[PITCH_Index].ILimit = 0; 
+		GyroParams[PITCH_Index].D = -3;
+		GyroParams[PITCH_Index].DLimit = 20; 
+		GyroParams[PITCH_Index].ComplementaryFilterAlpha = 0;
+		PIDGyroParams[PITCH_Index].I = 0;
+		
+		GyroParams[ROLL_Index].P = 27;
+		GyroParams[ROLL_Index].PLimit = 60;
+		GyroParams[ROLL_Index].I = 0;
+		GyroParams[ROLL_Index].ILimit = 0;
+		GyroParams[ROLL_Index].D = -3;
+		GyroParams[ROLL_Index].DLimit = 20;
+		GyroParams[ROLL_Index].ComplementaryFilterAlpha = 0;
+		PIDGyroParams[ROLL_Index].I = 0;
+		
+		GyroParams[YAW_Index].P = 50;
+		GyroParams[YAW_Index].PLimit = 80;
+		GyroParams[YAW_Index].I = 50;
+		GyroParams[YAW_Index].ILimit = 90;
+		GyroParams[YAW_Index].D = 0;
+		GyroParams[YAW_Index].DLimit = 20;
+		GyroParams[YAW_Index].ComplementaryFilterAlpha = 200;
+		PIDGyroParams[YAW_Index].I = 0;
 	
+		// motor calculation variables
+		for (int i = 0; i < DEGREESOFFREEDOM; i++) SensorData[i] = 0;
+		for (int i = 0; i < NUMRXCHANNELS; i++) RXUser[i] = 0;
+		boardOrientation = false;
+		flyOrientation = false;
+		acrobatMode = false;
+		userMode = true;
 	}
 	
 	// TODO: Call on change to 'stop' or IMU update
@@ -256,7 +330,7 @@
 		// GYRO calculated
 		gyroPitch = PID_Calculate(GyroParams[PITCH_Index] &PIDGyroParams[PITCH_Index], CompGyroPitch);
 		gyroRoll = PID_Calculate(GyroParams[ROLL_Index] &PIDGyroParams[ROLL_Index], CompGyroRoll);
-		gyroYaw = PID_Calculate(GyroParams[YAW_Index] &PIDGyroParams[YAW_Index], CompGyroZ); // subtract from last term for changing altitude
+		gyroYaw = PID_Calculate(GyroParams[YAW_Index] &PIDGyroParams[YAW_Index] - RXUser[RXChannel_RUD]/2.0f, CompGyroZ); // subtract from last term for changing altitude
 		
 		// Read Acc and offsets (- since Acc directions same as Gyro directions)
 		APitch = - SensorData[ACC_PITCH_Index] - ACC_Pitch_offset;
