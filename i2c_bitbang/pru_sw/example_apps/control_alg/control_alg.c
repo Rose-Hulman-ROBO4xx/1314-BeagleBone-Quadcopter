@@ -120,7 +120,7 @@ void init_filter(comp_filter_t * comp_filter, double alpha, double beta, double 
 
 
 void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gyro, double dt){
-	gyro = (gyro/32768.0)*2000.0;
+	gyro = (gyro/32768.0)*2000.0;	// Ensure that this is in degrees, not radians (Mike)
 	double accel_angle = acc/prev_data->g;
 
 	if (fabs(accel_angle)-1 == 0){
@@ -130,14 +130,16 @@ void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gy
 		accel_angle = asin(accel_angle);
 	}
 
+	// Ensure that this is in degrees, not a mix of both
 	prev_data->th = prev_data->alpha*(prev_data->th + gyro*dt) + prev_data->beta*accel_angle*RAD_TO_DEG;
 }
 
 void get_imu_frame(imu_data_t * imu_frame){
+	// Possibly change to an interrupt? (Mike)
 	while(!pruDataMem_int[1]){ // wait for pru to signal that new data is available
 	}
 	pruDataMem_int[1] = 0;
-	imu_frame->x_a = (signed short)pruDataMem_int[2];
+		imu_frame->x_a = (signed short)pruDataMem_int[2];
         imu_frame->y_a = (signed short)pruDataMem_int[3];
         imu_frame->z_a = (signed short)pruDataMem_int[4];
         imu_frame->x_g = (signed short)pruDataMem_int[5];
@@ -275,6 +277,7 @@ int main (void)
 	pru_pwm_frame_t * pwm_out = get_pwm_pointer();
 	init_pwm(next_pwm);
 	output_pwm(next_pwm, pwm_out);
+	// P,I,D values should probably be different between the different loops (Mike)
 	init_PID(PID_pitch, P_DEF, I_DEF, D_DEF);
 	init_PID(PID_roll, P_DEF, I_DEF, D_DEF);
 	init_PID(PID_yaw, P_DEF, I_DEF, D_DEF);
