@@ -300,6 +300,7 @@ int main (void)
 	init_filter(theta_y, 1, 0, G);
 
 	while(1){
+		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
 		get_imu_frame(imu_frame);
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);

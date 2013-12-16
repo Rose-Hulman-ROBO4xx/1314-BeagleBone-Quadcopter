@@ -51,13 +51,49 @@ io.sockets.on('connection', function (socket) {
     console.log("Connection " + socket.id + " accepted.");
 
     /*
-    This is where all of our handlers for button presses must go
+    This is where all of our socket.io handlers must go
     */
 
-    // Server side callback (via socket.io) for our test button
+    // Server side callback for our test button
     socket.on('testButtonPress', function () {
         console.log("Test Button Pressed, for realzies!");
     });
+
+    /*
+        Server side callback for our key bindings
+    */
+    socket.on('leftKeyPressed', function (value) {
+        console.log("Left key pressed with a value of: " + value);
+    });
+
+    socket.on('upKeyPressed', function (value) {
+        console.log("Up key pressed with a value of: " + value);
+    });
+
+    socket.on('rightKeyPressed', function (value) {
+        console.log("Right key pressed with a value of: " + value);
+    });
+
+    socket.on('downKeyPressed', function (value) {
+        console.log("Down key pressed with a value of: " + value);
+    });
+
+    socket.on('wKeyPressed', function (value) {
+        console.log("W key pressed with a value of: " + value);
+    });
+
+    socket.on('aKeyPressed', function (value) {
+        console.log("A key pressed with a value of: " + value);
+    });
+
+    socket.on('sKeyPressed', function (value) {
+        console.log("S key pressed with a value of: " + value);
+    });
+
+    socket.on('dKeyPressed', function (value) {
+        console.log("D key pressed with a value of: " + value);
+    });
+
 
     // Boilerplate to deal with connection managing
     socket.on('disconnect', function () {
