@@ -435,12 +435,12 @@ IMU_ENABLE_GPIO_AND_SET_DIRECTIONS:
 
 	mov ARG_0.b0, 0x68 //set the sample rate
 	mov ARG_0.b1, 0x19
-	mov ARG_0.b2, 0x03
+	mov ARG_0.b2, 0x04
 	call WRITE_BYTE
 
 	mov ARG_0.b0, 0x68 //set the accelerometer sensitivity
 	mov ARG_0.b1, 0x1C
-	mov ARG_0.b2, 0b00010000
+	mov ARG_0.b2, 0b00011000
 	call WRITE_BYTE
 
 	mov ARG_0.b0, 0x68 //set the gyro sensitivity

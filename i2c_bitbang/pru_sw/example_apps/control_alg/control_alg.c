@@ -9,22 +9,22 @@
 #define PWM_1_ADDRESS 9
 #define PWM_2_ADDRESS 10
 #define PWM_3_ADDRESS 11
-#define ALPHA		0
+#define ALPHA		.995
 #define BETA		(1-ALPHA)
-#define G		8192
+#define G		2048
 #define AM33XX
 #define CALIBRATION_SAMPLES 256
 #define PI 3.141592653589793238462643383279502884197169399375105
 #define RAD_TO_DEG	57.2957795f
-#define DT		0.002f
+#define DT		0.005f
 #define PWM_MIN		105000
 #define PWM_MAX		170000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 
 #define P_DEF		1000
-#define I_DEF		0
-#define D_DEF		0
+#define I_DEF		.1
+#define D_DEF		.1
 #define TIME_STEP	0.002f
 
 
@@ -120,17 +120,12 @@ void init_filter(comp_filter_t * comp_filter, double alpha, double beta, double 
 
 
 void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gyro, double dt){
-	gyro = (gyro/32768.0)*2000.0;	// Ensure that this is in degrees, not radians (Mike)
+	gyro = (gyro/32768.0)*2000.0;	// Ensure that this is in degrees, not radians (Mike) // It is in degrees (chris)
 	double accel_angle = acc/prev_data->g;
-
-	if (fabs(accel_angle)-1 == 0){
-		printf("WHY ARE WE HERE??? %f\n", accel_angle);
-		accel_angle = copysign(PI/2, accel_angle);
-	} else{
-		accel_angle = asin(accel_angle);
-	}
-
+	accel_angle = MAX(MIN(accel_angle, 1.0), -1.0);
+	accel_angle = asin(accel_angle);
 	// Ensure that this is in degrees, not a mix of both
+	// IT IS IN DEGREES! (chris)
 	prev_data->th = prev_data->alpha*(prev_data->th + gyro*dt) + prev_data->beta*accel_angle*RAD_TO_DEG;
 }
 
@@ -278,6 +273,7 @@ int main (void)
 	init_pwm(next_pwm);
 	output_pwm(next_pwm, pwm_out);
 	// P,I,D values should probably be different between the different loops (Mike)
+	// They were coded like this because we have no idea what they will actually be until we have a quad to test with.  At that time, we will start playing with the values (chris)
 	init_PID(PID_pitch, P_DEF, I_DEF, D_DEF);
 	init_PID(PID_roll, P_DEF, I_DEF, D_DEF);
 	init_PID(PID_yaw, P_DEF, I_DEF, D_DEF);
@@ -286,7 +282,6 @@ int main (void)
 
 	imu_data_t * calib_data;
 	calib_data = get_calibration_data();
-	return 0;
 	printf("check calibration data for sanity: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 	
 	
@@ -301,13 +296,14 @@ int main (void)
 
 	while(1){
 		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
+		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
 		get_imu_frame(imu_frame);
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
 		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal);
 		output_pwm(next_pwm, pwm_out);
 
-		printf("pitch: %03.5f, roll: %03.5f, yaw: %03.5f, z: %03.5f m0: %d, m1: %d, m2: %d, m3: %d DT: %d\n", theta_p->th, theta_r->th, theta_y->th, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three, DT);
+		printf("pitch: % 03.5f, roll: % 03.5f, yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d DT: %d\n", theta_p->th, theta_r->th, theta_y->th, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three, DT);
 	}
 
 	uninitialize_pru();
