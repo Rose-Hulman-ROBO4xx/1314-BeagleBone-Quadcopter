@@ -64,10 +64,31 @@ DATA_LOOP:
 
 	lbco r13, CONST_PRUDRAM, 0, 4
 	QBNE DATA_LOOP, R13, 0
+EXIT:
 	mov r3, 0
 	sbco r3, CONST_PRUDRAM, 0, 4
-
-
+	mov ARG_0, PWM_MIN
+	mov ARG_1, PWM_MIN
+	mov ARG_2, PWM_MIN
+	mov ARG_3, PWM_MIN
+	
+	//clear esc lpf
+	call SEND_PWM_PULSE
+	call PWM_DELAY
+	call SEND_PWM_PULSE
+	call PWM_DELAY
+	call SEND_PWM_PULSE
+	call PWM_DELAY
+	call SEND_PWM_PULSE
+	call PWM_DELAY
+	call SEND_PWM_PULSE
+	call PWM_DELAY
+	call SEND_PWM_PULSE
+	call PWM_DELAY
+	call SEND_PWM_PULSE
+	call PWM_DELAY
+	call SEND_PWM_PULSE
+	call PWM_DELAY
 
     // Send notification to Host for program completion
     MOV R31.b0, PRU0_ARM_INTERRUPT+16

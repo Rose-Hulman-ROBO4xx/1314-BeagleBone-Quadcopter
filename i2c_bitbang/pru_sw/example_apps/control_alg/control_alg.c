@@ -9,7 +9,7 @@
 #define PWM_1_ADDRESS 9
 #define PWM_2_ADDRESS 10
 #define PWM_3_ADDRESS 11
-#define ALPHA		0.999
+#define ALPHA		.999
 #define BETA		(1-ALPHA)
 #define G		2048
 #define AM33XX
@@ -129,13 +129,10 @@ void init_filter(comp_filter_t * comp_filter, double alpha, double beta, double 
 
 void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gyro, double dt){
 	
-	gyro = (gyro/GYRO_MAX_RAW)*GYRO_SENSITIVITY;	// Ensure that this is in degrees, not radians (Mike)
-       	// It is in degrees (chris)
+	gyro = (gyro/GYRO_MAX_RAW)*GYRO_SENSITIVITY;
 	double accel_angle = acc/prev_data->g;
 	accel_angle = MAX(MIN(accel_angle, 1.0), -1.0);
 	accel_angle = asin(accel_angle);
-	// Ensure that this is in degrees, not a mix of both
-	// IT IS IN DEGREES! (chris)
 	prev_data->th = prev_data->alpha*(prev_data->th + gyro*dt) + prev_data->beta*accel_angle*RAD_TO_DEG;
 }
 
@@ -265,7 +262,6 @@ void output_pwm(pwm_frame_t * pwm_frame_next, pru_pwm_frame_t * pwm_out){
 
 int main (void)
 {
-        signal(SIGINT, signal_handler);
 
 	comp_filter_t * theta_p = malloc(sizeof(comp_filter_t));
 	comp_filter_t * theta_r = malloc(sizeof(comp_filter_t));
@@ -294,6 +290,7 @@ int main (void)
 
 	imu_data_t * calib_data;
 	calib_data = get_calibration_data();
+        signal(SIGINT, signal_handler);
 	printf("check calibration data for sanity: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 	
 	
@@ -350,9 +347,12 @@ void filter_loop(imu_data_t * imu_frame, comp_filter_t * theta_p, comp_filter_t 
 	double temp_z_acc = imu_frame->z_a*fabs(cos(theta_p->th/RAD_TO_DEG)*cos(theta_r->th/RAD_TO_DEG));
 	temp_z_acc = ((temp_z_acc/32768.0f)*8.0f)*DT;
 	*z_vel += temp_z_acc;
-
-	calculate_next_comp_filter(theta_p, imu_frame->y_a, -imu_frame->x_g, DT);
-	calculate_next_comp_filter(theta_r, imu_frame->x_a, -imu_frame->y_g, DT);
+	
+	//forward is +y is towards the ethernet port
+	//right is +x is header P9
+	//up is +z is the vector pointing from the cape to the beaglebone
+	calculate_next_comp_filter(theta_p, -imu_frame->y_a, -imu_frame->x_g, DT);
+	calculate_next_comp_filter(theta_r, -imu_frame->x_a, imu_frame->y_g, DT);
 	calculate_next_comp_filter(theta_y, imu_frame->z_a, -imu_frame->z_g, DT);
 }
 
