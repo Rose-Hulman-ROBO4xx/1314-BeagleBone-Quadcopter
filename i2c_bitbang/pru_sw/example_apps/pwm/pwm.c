@@ -187,7 +187,7 @@ void initialize_pru(){
     pruDataMem_int = (volatile signed int*) pruDataMem;
 }
 void start_pru(){
-    prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
+    prussdrv_exec_program (PRU_NUM, "./pwm_control_alg.bin");
     pruDataMem_int[0] = 1;
 }
 
@@ -273,7 +273,7 @@ int main (void)
 
 	while(pruDataMem_int[0] != 0){
 
-		scanf("%d %d %d %d\n", &(next_pwm->zero), &(next_pwm->one), &(next_pwm->two), &(next_pwm->three));
+		scanf("%d %d %d %d", &(next_pwm->zero), &(next_pwm->one), &(next_pwm->two), &(next_pwm->three));
 		next_pwm->zero *= 1000;
 		next_pwm->one *= 1000;
 		next_pwm->two *= 1000;
