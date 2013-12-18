@@ -9,7 +9,7 @@
 #define PWM_1_ADDRESS 9
 #define PWM_2_ADDRESS 10
 #define PWM_3_ADDRESS 11
-#define ALPHA		.995
+#define ALPHA		0.999
 #define BETA		(1-ALPHA)
 #define G		2048
 #define AM33XX
@@ -21,6 +21,9 @@
 #define PWM_MAX		170000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
+
+#define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
+#define MAX_GYRO_RAW	32768 //maximum raw output of gyro
 
 #define P_DEF		1000
 #define I_DEF		.1
@@ -120,7 +123,9 @@ void init_filter(comp_filter_t * comp_filter, double alpha, double beta, double 
 
 
 void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gyro, double dt){
-	gyro = (gyro/32768.0)*2000.0;	// Ensure that this is in degrees, not radians (Mike) // It is in degrees (chris)
+	
+	gyro = (gyro/GYRO_MAX_RAW)*GYRO;	// Ensure that this is in degrees, not radians (Mike)
+       	// It is in degrees (chris)
 	double accel_angle = acc/prev_data->g;
 	accel_angle = MAX(MIN(accel_angle, 1.0), -1.0);
 	accel_angle = asin(accel_angle);
@@ -304,6 +309,7 @@ int main (void)
 		output_pwm(next_pwm, pwm_out);
 
 		printf("pitch: % 03.5f, roll: % 03.5f, yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d DT: %d\n", theta_p->th, theta_r->th, theta_y->th, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three, DT);
+//		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 	}
 
 	uninitialize_pru();
