@@ -120,7 +120,18 @@ PWM_ENABLE_GPIO_AND_SET_DIRECTIONS:
 	lbbo r0, r1, 0, 4
 	clr r0, r0, PWM_1_BIT
         sbbo r0, r1, 0, 4
+
+	mov r1, PWM_2_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, PWM_2_BIT
+        sbbo r0, r1, 0, 4
 	
+	mov r1, PWM_3_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, PWM_3_BIT
+        sbbo r0, r1, 0, 4
+	
+
 	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
 	add SP_reg, SP_reg, 8
 
