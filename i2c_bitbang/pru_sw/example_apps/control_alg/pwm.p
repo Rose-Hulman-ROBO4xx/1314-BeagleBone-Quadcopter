@@ -46,6 +46,8 @@ SEND_PWM_PULSE:
 PWM_PULSE_LOOP:
 	add r0, r0, 1
 	qblt SKIP_0, ARG_0, r0
+	add r0, r0, 1
+	qbbc SKIP_0, r3, 0
 
 	mov r1,  1 << PWM_0_BIT
 	mov r2, PWM_0_BANK | GPIO_CLEARDATAOUT
@@ -56,6 +58,9 @@ PWM_PULSE_LOOP:
 SKIP_0:
 	add r0, r0, 1
 	qblt SKIP_1, ARG_1, r0
+	add r0, r0, 1
+	qbbc SKIP_1, r3, 1
+
 
 	mov r1, 1 << PWM_1_BIT
 	mov r2, PWM_1_BANK | GPIO_CLEARDATAOUT
@@ -67,6 +72,9 @@ SKIP_0:
 SKIP_1:
 	add r0, r0, 1
 	qblt SKIP_2, ARG_2, r0
+	add r0, r0, 1
+	qbbc SKIP_2, r3, 2
+
 
 	mov r1,  1 << PWM_2_BIT
 	mov r2, PWM_2_BANK | GPIO_CLEARDATAOUT
@@ -77,6 +85,9 @@ SKIP_1:
 SKIP_2:
 	add r0, r0, 1
 	qblt SKIP_3, ARG_3, r0
+	add r0, r0, 1
+	qbbc SKIP_3, r3, 3
+
 
 	mov r1,  1 << PWM_3_BIT
 	mov r2, PWM_3_BANK | GPIO_CLEARDATAOUT
