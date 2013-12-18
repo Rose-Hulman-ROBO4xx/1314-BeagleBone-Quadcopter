@@ -3,7 +3,7 @@
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
 #include <math.h>
-
+#include <signal.h>
 #define PRU_NUM 	0
 #define PWM_0_ADDRESS 8
 #define PWM_1_ADDRESS 9
@@ -23,7 +23,7 @@
 #define MAX(a,b)	(a>b ? a : b)
 
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
-#define MAX_GYRO_RAW	32768 //maximum raw output of gyro
+#define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
 #define P_DEF		1000
 #define I_DEF		.1
@@ -98,6 +98,11 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 void init_PID(PID_t * PID_x, double kP, double kI, double kD);
 void get_set_point(set_point_t * goal);
 double PID_loop(double goal, PID_t * PID_x, double value);
+void signal_handler(int sig);
+
+void signal_handler(int sig){
+	pruDataMem_int[0] = 0;
+}
 
 void get_set_point(set_point_t * goal){
 	goal->pitch = 0;
@@ -124,7 +129,7 @@ void init_filter(comp_filter_t * comp_filter, double alpha, double beta, double 
 
 void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gyro, double dt){
 	
-	gyro = (gyro/GYRO_MAX_RAW)*GYRO;	// Ensure that this is in degrees, not radians (Mike)
+	gyro = (gyro/GYRO_MAX_RAW)*GYRO_SENSITIVITY;	// Ensure that this is in degrees, not radians (Mike)
        	// It is in degrees (chris)
 	double accel_angle = acc/prev_data->g;
 	accel_angle = MAX(MIN(accel_angle, 1.0), -1.0);
@@ -260,6 +265,8 @@ void output_pwm(pwm_frame_t * pwm_frame_next, pru_pwm_frame_t * pwm_out){
 
 int main (void)
 {
+        signal(SIGINT, signal_handler);
+
 	comp_filter_t * theta_p = malloc(sizeof(comp_filter_t));
 	comp_filter_t * theta_r = malloc(sizeof(comp_filter_t));
 	comp_filter_t * theta_y = malloc(sizeof(comp_filter_t));
@@ -299,7 +306,7 @@ int main (void)
 	init_filter(theta_r, ALPHA, BETA, G);
 	init_filter(theta_y, 1, 0, G);
 
-	while(1){
+	while(pruDataMem_int[0] != 0){
 		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
 		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
 		get_imu_frame(imu_frame);
