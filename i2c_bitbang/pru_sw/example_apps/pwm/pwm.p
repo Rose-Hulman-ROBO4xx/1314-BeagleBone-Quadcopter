@@ -13,14 +13,14 @@
 #define GPIO_CLEARDATAOUT 	0x190
 #define GPIO_SETDATAOUT 	0x194
 
-#define PWM_0_BANK		GPIO1
-#define PWM_0_BIT		28
+#define PWM_0_BANK		GPIO0
+#define PWM_0_BIT		3
 #define PWM_1_BANK		GPIO0
-#define PWM_1_BIT		30
-#define PWM_2_BANK		GPIO1
-#define PWM_2_BIT		19
+#define PWM_1_BIT		2
+#define PWM_2_BANK		GPIO0
+#define PWM_2_BIT		15
 #define PWM_3_BANK		GPIO0
-#define PWM_3_BIT		5
+#define PWM_3_BIT		14
 
 #define DELAY_TIME		500000
 #define PRU_CONFIG		C4
@@ -179,6 +179,16 @@ ENABLE_GPIO_AND_SET_DIRECTIONS:
 	mov r1, PWM_1_BANK | GPIO_OE
 	lbbo r0, r1, 0, 4
 	clr r0, r0, PWM_1_BIT
+        sbbo r0, r1, 0, 4
+
+	mov r1, PWM_2_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, PWM_2_BIT
+        sbbo r0, r1, 0, 4
+
+	mov r1, PWM_3_BANK | GPIO_OE
+	lbbo r0, r1, 0, 4
+	clr r0, r0, PWM_3_BIT
         sbbo r0, r1, 0, 4
 	
 	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
