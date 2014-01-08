@@ -8,128 +8,170 @@
     color: #000;
     padding: 0.2em 0.4em;
 }
-
 body {
-	background-color: #657077;
-	margin: 40px;
+    background-color: #657077;
+    margin: 20px;
 }
+
+.header {
+    background-color: red;
+    margin: 0px;
+    padding: 0px;
+}
+.logo{
+	width:100%;
+}
+
+.logo li {
+	list-style:none;
+	display:inline-block;
+	width:32%;
+	margin:5px;
+	padding:0px;
+	vertical-align:middle;
+	height:100px;
+}
+#TI_logo {
+    background-color:black;
+}
+#TI_QC_logo {
+	margin-left:auto;
+	margin-right:auto;
+	display:block;
+}
+#slogan {
+	margin-left:auto;
+	margin-right:auto;
+	display:block
+}
+#middle_menu {
+    background-color:black;
+}
+#middle_menu li {
+    display:block;
+}
+#rose_logo {
+    background-color:black;
+}
+#rose_logo{
+	margin-left:auto;
+	margin-right:auto;
+}
+
 
 #menu {
-	margin: 0px auto 0px auto;
-	width:300px;
+    margin: 0px auto 0px auto;
+    width:100%;
 }
 
-ul.tabs {
-	margin:0px;
-	pading:0px;
+ul.tabs li {
+	background-color:grey;
+	width:45%;
+    list-style:none;
+    display:inline-block;
+	text-align:center;
+	height:50%;
+	vertical-align:middle;
 }
 
-ul.tabs li{
-	list-style:none;
-	display:inline;
+ul.sub_tabs li {
+	background-color:grey;
+	width:30%;
+    list-style:none;
+	text-align:center;
+	height:50%;
+	display:inline-text;
 }
 
-ul.tabs a{
-	background-color:#464c54;
-	color:#ffebb5;
-	padding:20px 40px 20px 40px;
-	text-decoration:none;
-	font-size:20px;
-	font-family:Verdana, Arial;
-	font-weight:bold;
-	text-transform:uppercase;
-	border:1px solid #464c54;
-}
-
-ul.tabs li a:hover {
-	background-color:#2f343a;
-	border-color:#2f343a;
-}
-
-ul.tabs li a.active{
-	background-color:#ffffff;
-	color:#282e32;
-	border:1px solid #464c54;
-	border-bottom: 1px solid #ffffff;
-}
-
-.content{
-	background-color:#ffffff;
-	margin-top:20px;
-	padding:10px;
-	border:1px solid #464c54;
-}
-
-#diagnostics, #instructions, #heads_up_display{
+#instructions_tab, #hud_tab, #diagnostics_tab, #opensource_tab, #forum_tab, #purchase_tab{
 	display:none;
 }
 
+ul.tabs a {
+    color:#ffebb5;
+    text-decoration:none;
+    font-size:40px;
+    font-family:Verdana, Arial;
+    font-weight:bold;
+    text-transform:uppercase;
+}
+
+ul.tabs a.active {
+    color:#000000;
+    text-decoration:none;
+    font-size:40px;
+    font-family:Verdana, Arial;
+    font-weight:bold;
+    text-transform:uppercase;
+}
+
+ul.tabs li:hover {
+    background-color:#2f343a;
+    border-color:#2f343a;
+}
+ul.tabs li.active {
+    background-color:#ffffff;
+    color:#282e32;
+    border:1px solid #464c54;
+    border-bottom: 1px solid #ffffff;
+}
+.content {
+    background-color:#ffffff;
+    margin-top:20px;
+    padding:10px;
+    border:1px solid #464c54;
+}
+
+.movements{
+	background-color:#777777;
+}
+
+.movements li{
+	display:block;
+}
+
 ul.tabs{
-	margin:0px;
-	padding:0px;
-	margin-top:5px;
-	margin-bottom:6px;
+    margin-left:auto;
+	margin-right:auto;
+    padding:0px;
 }
-
-.content ul{
-	margin:0px;
-	padding:0px 20px 0px 20px;
+.content ul {
+    margin:0px;
+    padding:0px 20px 0px 20px;
 }
-
 .content ul li {
-	list-style:none;
-	border-bottom:1px solid #d6dde0;
-	padding-top:15px;
-	padding-bottom:15px;
-	font-size:13px;
+    list-style:none;
+    border-bottom:1px solid #d6dde0;
+    padding-top:15px;
+    padding-bottom:15px;
+    font-size:13px;
 }
-
 .content ul li a {
-	text-decoration:none;
-	color:#3e4346;
+    text-decoration:none;
+    color:#3e4346;
 }
-
 .content ul li a small {
-	color:#8b959c;
-	font-size:9px;
-	text-transform:uppercase;
-	font-family:Verdana, Arial;
-	position:relative;
-	left:4px;
-	top:0px;
+    color:#8b959c;
+    font-size:9px;
+    text-transform:uppercase;
+    font-family:Verdana, Arial;
+    position:relative;
+    left:4px;
+    top:0px;
 }
-
-
-padding-top:15px;
-padding-bottom:15px;
-font-size:13px;
-}
-
 .content ul li a {
-	text-decoration:none;
-	color:#3e4346;
+    text-decoration:none;
+    color:#3e4346;
 }
-
 .content ul li a small {
-	color:#8b959c;
-	font-size:9px;
-	text-transform:uppercase;
-	font-family:Verdana, Arial;
-	position:relative;
-	left:4px;
-	top:0px;
+    color:#8b959c;
+    font-size:9px;
+    text-transform:uppercase;
+    font-family:Verdana, Arial;
+    position:relative;
+    left:4px;
+    top:0px;
 }
-
-.content ul li:last-child{
-	border-bottom:none;
+.content ul li:last-child {
+    border-bottom:none;
 }
-
-
-
-
-
-
-
-
-
-
