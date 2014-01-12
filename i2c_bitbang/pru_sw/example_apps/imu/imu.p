@@ -86,7 +86,7 @@
 #define IMU_INT_BANK		GPIO1
 #define IMU_INT_BIT_NUMBER	16
 
-#define DELAY_TIME 		100
+#define DELAY_TIME 		50
 #define ARG_0 			R17
 #define ARG_1			R18
 #define ARG_2			R19
@@ -139,7 +139,7 @@ IMU_MAIN:
 
 	mov ARG_0.b0, 0x68 //set the sample rate
 	mov ARG_0.b1, 0x19
-	mov ARG_0.b2, 0x03
+	mov ARG_0.b2, 0x04
 	call WRITE_BYTE
 
 	//configure tmp101
