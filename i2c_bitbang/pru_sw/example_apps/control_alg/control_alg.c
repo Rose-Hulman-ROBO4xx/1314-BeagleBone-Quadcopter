@@ -17,19 +17,30 @@
 #define PI 3.141592653589793238462643383279502884197169399375105
 #define RAD_TO_DEG	57.2957795f
 #define DT		0.005f
-#define PWM_MIN		105000
-#define PWM_MAX		120000
+#define PWM_MIN		120000
+#define PWM_MAX		160000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
-#define P_DEF		1000
-#define I_DEF		0
+#define P_DEF		260
+#define I_DEF		1
 #define D_DEF		0
-#define TIME_STEP	0.002f
+#define TIME_STEP	0.005f
 
+#define BIAS0 500
+#define BIAS1 0
+#define BIAS2 0
+#define BIAS3 200
+
+#define MULT0 1.05f
+#define MULT1 1.0f
+#define MULT2 1.01f
+#define MULT3 1.02f
+
+#define BIAS_MAX 20000
 
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
@@ -303,9 +314,11 @@ int main (void)
 	init_filter(theta_r, ALPHA, BETA, G);
 	init_filter(theta_y, 1, 0, G);
 
-	int bias = 5000;
+	int bias = 0;
 	while(pruDataMem_int[0] != 0){
-//		bias += 3;
+		if (bias < BIAS_MAX){
+			bias += 3;
+		}
 		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
 		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
 		get_imu_frame(imu_frame);
@@ -366,10 +379,15 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	
 	d_z = 0;//FIXME
 
-	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN+bias;
-	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN+bias;
-	next_pwm->two = -d_pitch - d_roll + d_yaw - d_z + PWM_MIN+bias;
-	next_pwm->three = d_pitch - d_roll - d_yaw - d_z + PWM_MIN+bias;
+	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN;
+	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN;
+	next_pwm->two = -d_pitch - d_roll + d_yaw - d_z + PWM_MIN;
+	next_pwm->three = d_pitch - d_roll - d_yaw - d_z + PWM_MIN;
+	
+	next_pwm->zero = next_pwm->zero * MULT0 + bias + BIAS0;
+	next_pwm->one = next_pwm->one * MULT1 + bias + BIAS1;
+	next_pwm->two = next_pwm->two * MULT2 + bias + BIAS2;
+	next_pwm->three = next_pwm->three * MULT3 + bias + BIAS3;
 
 	next_pwm->zero = MIN(PWM_MAX, MAX(PWM_MIN,next_pwm->zero));
 	next_pwm->one = MIN(PWM_MAX, MAX(PWM_MIN,next_pwm->one));

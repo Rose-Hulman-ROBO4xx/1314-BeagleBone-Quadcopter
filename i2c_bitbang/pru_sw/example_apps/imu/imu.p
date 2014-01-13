@@ -86,7 +86,7 @@
 #define IMU_INT_BANK		GPIO1
 #define IMU_INT_BIT_NUMBER	16
 
-#define DELAY_TIME 		50
+#define DELAY_TIME 		100
 #define ARG_0 			R17
 #define ARG_1			R18
 #define ARG_2			R19
