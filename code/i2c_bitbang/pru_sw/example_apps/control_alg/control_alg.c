@@ -5,10 +5,10 @@
 #include <math.h>
 #include <signal.h>
 #define PRU_NUM 	0
-#define PWM_0_ADDRESS 8
-#define PWM_1_ADDRESS 9
-#define PWM_2_ADDRESS 10
-#define PWM_3_ADDRESS 11
+#define PWM_0_ADDRESS 9
+#define PWM_1_ADDRESS 10
+#define PWM_2_ADDRESS 11
+#define PWM_3_ADDRESS 8
 #define ALPHA		.999
 #define BETA		(1-ALPHA)
 #define G		2048
@@ -16,20 +16,30 @@
 #define CALIBRATION_SAMPLES 256
 #define PI 3.141592653589793238462643383279502884197169399375105
 #define RAD_TO_DEG	57.2957795f
-#define DT		0.005f
-#define PWM_MIN		105000
-#define PWM_MAX		170000
+#define DT		.005f
+#define PWM_MIN		120000
+#define PWM_MAX		160000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
-#define P_DEF		1000
-#define I_DEF		.1
-#define D_DEF		.1
-#define TIME_STEP	0.002f
+#define P_DEF		300
+#define I_DEF		50
+#define D_DEF		0
 
+#define BIAS0 0.0f
+#define BIAS1 0.0f
+#define BIAS2 0.0f
+#define BIAS3 0.0f
+
+#define MULT0 1.0f
+#define MULT1 1.0f
+#define MULT2 1.0f
+#define MULT3 1.0f
+
+#define BIAS_MAX 20000
 
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
@@ -94,7 +104,7 @@ void initialize_pru();
 void start_pru();
 void uninitialize_pru();
 imu_data_t * get_calibration_data();
-void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal);
+void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf);
 void init_PID(PID_t * PID_x, double kP, double kI, double kD);
 void get_set_point(set_point_t * goal);
 double PID_loop(double goal, PID_t * PID_x, double value);
@@ -274,6 +284,14 @@ int main (void)
 	PID_t * PID_yaw = malloc(sizeof(PID_t));
 	PID_t * PID_z = malloc(sizeof(PID_t));
 	set_point_t * goal = malloc(sizeof(set_point_t));
+	set_point_t * cf = malloc(sizeof(set_point_t));
+
+	FILE * response_log = fopen("system_response.csv", "w");
+	if (response_log == NULL){
+		fprintf(stderr, "Couldn't open response.csv");
+		exit(-1);
+	}
+	fprintf(response_log, "bias,pitch,cf_pitch,roll,cf_roll,yaw,cf_yaw,z,m0,m1,m2,m3\n");
 
 	initialize_pru();
 	start_pru();
@@ -303,21 +321,27 @@ int main (void)
 	init_filter(theta_r, ALPHA, BETA, G);
 	init_filter(theta_y, 1, 0, G);
 
+	
+	int bias = 0;
 	while(pruDataMem_int[0] != 0){
+		if (bias < BIAS_MAX){
+			bias += 5;
+		}
 		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
 		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
 		get_imu_frame(imu_frame);
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
-		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal);
+		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf);
 		output_pwm(next_pwm, pwm_out);
-
-		printf("pitch: % 03.5f, roll: % 03.5f, yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d DT: %d\n", theta_p->th, theta_r->th, theta_y->th, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three, DT);
+		
+		printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 //		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 	}
 
 	uninitialize_pru();
-	
+	fclose(response_log);
 	free(theta_p);
 	free(theta_r);
 	free(theta_y);
@@ -345,29 +369,37 @@ void calibrate_imu_frame(imu_data_t * imu_frame, imu_data_t * calib_data){
 
 void filter_loop(imu_data_t * imu_frame, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel){
 	double temp_z_acc = imu_frame->z_a*fabs(cos(theta_p->th/RAD_TO_DEG)*cos(theta_r->th/RAD_TO_DEG));
-	temp_z_acc = ((temp_z_acc/32768.0f)*8.0f)*DT;
+	temp_z_acc = ((temp_z_acc/32768.0f)*8.0f);
 	*z_vel += temp_z_acc;
 	
 	//forward is +y is towards the ethernet port
 	//right is +x is header P9
 	//up is +z is the vector pointing from the cape to the beaglebone
-	calculate_next_comp_filter(theta_p, -imu_frame->y_a, -imu_frame->x_g, DT);
-	calculate_next_comp_filter(theta_r, -imu_frame->x_a, imu_frame->y_g, DT);
-	calculate_next_comp_filter(theta_y, imu_frame->z_a, -imu_frame->z_g, DT);
+	calculate_next_comp_filter(theta_p, imu_frame->y_a, -imu_frame->x_g, DT);
+	calculate_next_comp_filter(theta_r, imu_frame->x_a, imu_frame->y_g, DT);
+	calculate_next_comp_filter(theta_y, imu_frame->z_a, imu_frame->z_g, DT);
 }
 
-void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal){
+void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf){
 	double d_pitch = PID_loop(goal->pitch, PID_pitch, theta_p->th);
 	double d_roll = PID_loop(goal->roll, PID_roll, theta_r->th);
 	double d_yaw = PID_loop(goal->yaw, PID_yaw, theta_y->th);
 	double d_z = PID_loop(goal->z, PID_z, *z_vel);
-	
+	cf->roll = d_roll;
+	cf->pitch = d_pitch;
+	cf->yaw = d_yaw;
+
 	d_z = 0;//FIXME
 
 	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN;
 	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN;
 	next_pwm->two = -d_pitch - d_roll + d_yaw - d_z + PWM_MIN;
 	next_pwm->three = d_pitch - d_roll - d_yaw - d_z + PWM_MIN;
+	
+	next_pwm->zero = next_pwm->zero * MULT0 + bias + BIAS0;
+	next_pwm->one = next_pwm->one * MULT1 + bias + BIAS1;
+	next_pwm->two = next_pwm->two * MULT2 + bias + BIAS2;
+	next_pwm->three = next_pwm->three * MULT3 + bias + BIAS3;
 
 	next_pwm->zero = MIN(PWM_MAX, MAX(PWM_MIN,next_pwm->zero));
 	next_pwm->one = MIN(PWM_MAX, MAX(PWM_MIN,next_pwm->one));
@@ -381,9 +413,9 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 	delta_error = goal - value;
 
 	P = PID_x->kP * delta_error;
-	I = PID_x->kI*(PID_x->I + delta_error*DT);
+	I = (PID_x->kI * (PID_x->I + delta_error)) * DT;
 	PID_x->I = I;
-	D = PID_x->kD*(delta_error - PID_x->D)*DT;
+	D = PID_x->kD*((delta_error - PID_x->D) / DT);
 	PID_x->D = delta_error;
 
 	return P + I + D;
