@@ -9,7 +9,7 @@
 #define PWM_1_ADDRESS 10
 #define PWM_2_ADDRESS 11
 #define PWM_3_ADDRESS 8
-#define ALPHA		.999
+#define ALPHA		.99
 #define BETA		(1-ALPHA)
 #define G		2048
 #define AM33XX
@@ -17,29 +17,29 @@
 #define PI 3.141592653589793238462643383279502884197169399375105
 #define RAD_TO_DEG	57.2957795f
 #define DT		.005f
-#define PWM_MIN		120000
-#define PWM_MAX		160000
+#define PWM_MIN		117000//110000
+#define PWM_MAX		120000//160000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
-#define P_DEF		300
-#define I_DEF		50
+#define P_DEF		500//20
+#define I_DEF		0
 #define D_DEF		0
 
-#define BIAS0 0.0f
-#define BIAS1 0.0f
-#define BIAS2 0.0f
-#define BIAS3 0.0f
+#define BIAS0 0.0f//20000.0f
+#define BIAS1 0.0f//20000.0f
+#define BIAS2 0.0f//20000.0f
+#define BIAS3 0.0f//20000.0f
 
-#define MULT0 1.0f
-#define MULT1 1.0f
-#define MULT2 1.0f
-#define MULT3 1.0f
+#define MULT0 1.00f
+#define MULT1 1.00f
+#define MULT2 1.00f
+#define MULT3 1.00f
 
-#define BIAS_MAX 20000
+#define BIAS_MAX 0 //20000
 
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
@@ -325,7 +325,7 @@ int main (void)
 	int bias = 0;
 	while(pruDataMem_int[0] != 0){
 		if (bias < BIAS_MAX){
-			bias += 5;
+			//bias += 5;
 		}
 		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
 		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
@@ -336,7 +336,7 @@ int main (void)
 		output_pwm(next_pwm, pwm_out);
 		
 		printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
-		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 //		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 	}
 
@@ -360,7 +360,7 @@ int main (void)
 void calibrate_imu_frame(imu_data_t * imu_frame, imu_data_t * calib_data){
 	imu_frame->x_a -= calib_data->x_a;
 	imu_frame->y_a -= calib_data->y_a;
-	imu_frame->z_a -= calib_data->z_a;
+	imu_frame->z_a -= calib_data->z_a + 1;
 
 	imu_frame->x_g -= calib_data->x_g;
 	imu_frame->y_g -= calib_data->y_g;
@@ -388,9 +388,9 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	cf->roll = d_roll;
 	cf->pitch = d_pitch;
 	cf->yaw = d_yaw;
-
+	
 	d_z = 0;//FIXME
-
+	
 	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN;
 	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN;
 	next_pwm->two = -d_pitch - d_roll + d_yaw - d_z + PWM_MIN;
@@ -405,7 +405,6 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	next_pwm->one = MIN(PWM_MAX, MAX(PWM_MIN,next_pwm->one));
 	next_pwm->two = MIN(PWM_MAX, MAX(PWM_MIN,next_pwm->two));
 	next_pwm->three = MIN(PWM_MAX, MAX(PWM_MIN,next_pwm->three));
-
 }
 
 double PID_loop(double goal, PID_t * PID_x, double value){
