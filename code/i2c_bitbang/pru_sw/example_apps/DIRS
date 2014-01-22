@@ -4,19 +4,22 @@ APP_DIRS += imu
 APP_DIRS += pwm
 #APP_DIRS += stop_pru
 #APP_DIRS += test_pru
-#APP_DIRS += blink
+APP_DIRS += blink
 APP_DIRS += control_alg
+APP_DIRS += camera
 
 ASSEM_FILES :=
 ASSEM_FILES += imu/imu.p
 ASSEM_FILES += pwm/pwm_control_alg.p
 #ASSEM_FILES += test_pru/test.p
-#ASSEM_FILES += blink/blink.p
+ASSEM_FILES += blink/blink.p
 ASSEM_FILES += control_alg/control_alg.p
+ASSEM_FILES += camera/camera.p
 
 BIN_FILES :=
 BIN_FILES += imu.bin
 BIN_FILES += pwm.bin
 #BIN_FILES += test.bin
-#BIN_FILES += blink.bin
+BIN_FILES += blink.bin
 BIN_FILES += control_alg.bin
+BIN_FILES += camera.bin
