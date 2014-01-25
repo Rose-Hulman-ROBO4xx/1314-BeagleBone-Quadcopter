@@ -18,14 +18,14 @@
 #define RAD_TO_DEG	57.2957795f
 #define DT		.005f
 #define PWM_MIN		117000//110000
-#define PWM_MAX		120000//160000
+#define PWM_MAX		170000//160000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
-
+#define BIAS_INCREASE_RATE 10
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
-#define P_DEF		500//20
+#define P_DEF		200//20
 #define I_DEF		0
 #define D_DEF		0
 
@@ -39,7 +39,7 @@
 #define MULT2 1.00f
 #define MULT3 1.00f
 
-#define BIAS_MAX 0 //20000
+#define BIAS_MAX 50000
 
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
@@ -148,7 +148,7 @@ void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gy
 
 void get_imu_frame(imu_data_t * imu_frame){
 	// Possibly change to an interrupt? (Mike)
-	while(!pruDataMem_int[1]){ // wait for pru to signal that new data is available
+	while(!pruDataMem_int[1] && !pruDataMem_int[0]){ // wait for pru to signal that new data is available
 	}
 	pruDataMem_int[1] = 0;
 		imu_frame->x_a = (signed short)pruDataMem_int[2];
@@ -197,8 +197,8 @@ void initialize_pru(){
     pruDataMem_int = (volatile signed int*) pruDataMem;
 }
 void start_pru(){
-    prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
     pruDataMem_int[0] = 1;
+    prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
 }
 
 
@@ -231,11 +231,11 @@ imu_data_t * get_calibration_data(){
 	
 	int i;
 	printf("clearing DLPF on imu..\n");
-	for (i = 0; i < 200; i++){
+	for (i = 0; (i < 200); i++){
 		get_imu_frame(&imu_data);
 	}
 
-	for (i = 0; i < CALIBRATION_SAMPLES; i++){
+	for (i = 0; (i < CALIBRATION_SAMPLES); i++){
 		get_imu_frame(&imu_data);
 		
 //		printf("%f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
@@ -325,8 +325,11 @@ int main (void)
 	int bias = 0;
 	while(pruDataMem_int[0] != 0){
 		if (bias < BIAS_MAX){
-			//bias += 5;
+			bias += BIAS_INCREASE_RATE;
+		} else{
+			printf("bias maxed out\n");
 		}
+		printf("herping\n");
 		// Can we break this up into several smaller function calls (One each for each axis of rotation). It will reduce coupling and make our code easier to write and refactor.
 		// I do not agree that we should have separate function calls for each axis.  We can treat each axis the same way for getting data, calibrating, and filtering.
 		get_imu_frame(imu_frame);
@@ -335,10 +338,11 @@ int main (void)
 		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf);
 		output_pwm(next_pwm, pwm_out);
 		
-		printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+	//	printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 //		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 	}
+	printf("exiting...\n");
 
 	uninitialize_pru();
 	fclose(response_log);

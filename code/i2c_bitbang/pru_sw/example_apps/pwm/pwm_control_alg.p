@@ -32,7 +32,6 @@ CONTROL_MAIN:
 	.assign pwm_state_frame, R9, R12, pwm_state
 
 	call PWM_ENABLE_GPIO_AND_SET_DIRECTIONS
-	call IMU_ENABLE_GPIO_AND_SET_DIRECTIONS
 	
 	mov pwm_state.N, PWM_MIN
 	mov pwm_state.E, PWM_MIN
@@ -40,31 +39,16 @@ CONTROL_MAIN:
 	mov pwm_state.W, PWM_MIN
 	mov r14, 0
 DATA_LOOP:
-
-	call GET_IMU_DATA
-	add r14, r14, 1
-	SBCO imu_return_data.x_a, CONST_PRUDRAM, 8, 2
-	SBCO imu_return_data.y_a, CONST_PRUDRAM, 12, 2
-	SBCO imu_return_data.z_a, CONST_PRUDRAM, 16, 2 
-	SBCO imu_return_data.x_g, CONST_PRUDRAM, 20, 2 
-	SBCO imu_return_data.y_g, CONST_PRUDRAM, 24, 2 
-	SBCO imu_return_data.z_g, CONST_PRUDRAM, 28, 2 
-	sbco r14, CONST_PRUDRAM, 48, 4
-
-	mov r8, 1
-	sbco r8, CONST_PRUDRAM, 4, 4
-
 	lbco ARG_0,CONST_PRUDRAM, 32, 4
 	lbco ARG_1,CONST_PRUDRAM, 36, 4
 	lbco ARG_2,CONST_PRUDRAM, 40, 4
 	lbco ARG_3,CONST_PRUDRAM, 44, 4
 	call SEND_PWM_PULSE
-//	call PWM_DELAY
+	call PWM_DELAY
 	
 
 	lbco r13, CONST_PRUDRAM, 0, 4
-	QBEQ EXIT, R13, 0
-	QBBS DATA_LOOP, R31, 0
+	QBNE DATA_LOOP, R13, 0
 EXIT:
 	mov r3, 0
 	sbco r3, CONST_PRUDRAM, 0, 4
@@ -98,4 +82,3 @@ EXIT:
 //------------------------------------------------------------
 
 #include "pwm.p"
-#include "imu.p"
