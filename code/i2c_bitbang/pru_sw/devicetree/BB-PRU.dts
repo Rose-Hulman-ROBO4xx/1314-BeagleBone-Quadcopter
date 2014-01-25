@@ -54,15 +54,15 @@
 
             cam_data{
                 pin-names     = "cam:dat0", "cam:dat1", "cam:dat2","cam:dat3","cam:dat4","cam:dat5","cam:dat6","cam:dat7","cam:pxlclk";
-                gpios         = <&gpio0 14 0
-                                &gpio2 7 0
+                gpios         = <&gpio2 7 0
                                 &gpio2 8 0
                                 &gpio2 9 0
                                 &gpio2 10 0
                                 &gpio2 11 0
                                 &gpio2 12 0
                                 &gpio2 13 0
-				&gpio2 6 0>;
+				&gpio2 6 0
+				&gpio0 14 0>;
             };            
 /*            cam_control{
                 pin-names     = "cam:pix_clk";        
