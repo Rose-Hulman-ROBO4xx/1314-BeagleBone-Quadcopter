@@ -42,7 +42,7 @@ MEMACCESSPRUDATARAM:
     
     // set parallel input capture
     LBCO      r0, CONST_PRUCFG, 0xC, 4
-    clr     r0, r0, 0
+    set     r0, r0, 0
     clr     r0, r0, 1
     SBCO      r0, CONST_PRUCFG, 0xC, 4
     
@@ -54,7 +54,7 @@ MEMACCESSPRUDATARAM:
     LBBO      buff1, buff1, 0, 4
     
     MOV       currBuff, buff0
-    MOV       numCols, 640
+    MOV       numCols, 639*2
     MOV       numRows, 480
     mov		r15, 0
     mov r16,   100*4
@@ -105,7 +105,7 @@ MEMACCESSPRUDATARAM:
     SBBO r1, r3, 0, 4
     
     LBBO r0, swapBuff, 0, 4
-    //QBEQ Loop, r0, 0
+    QBNE Loop, r15, 5
     
     MOV   r0, 0
     SBBO  r0, swapBuff, 0, 4
@@ -115,7 +115,7 @@ MEMACCESSPRUDATARAM:
     MOV   currBuff, buff0
 
     LBBO r0, exit, 0, 4
-    QBEQ Quit, r0, 1
+    QBNE Quit, r15, 5
     
     //QBA Loop
     

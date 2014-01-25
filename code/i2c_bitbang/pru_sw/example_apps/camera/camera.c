@@ -122,15 +122,16 @@ int main (void)
 
 	initialize_pru();
 	start_pru();
+	uninitialize_pru();
 	FILE * image_data = fopen("image.bin", "w");
 	if (image_data == NULL){
 		fprintf(stderr, "Failed to open image output file");
 		exit(-1);
 	}
 	fwrite((uint16_t *)pru1_ddr, sizeof(uint16_t), 640*480, image_data);
-	printf("%d\n", ((volatile uint16_t *)pru1_ddr)[0]);
+	printf("%d\n", ((volatile uint8_t *)pru1_ddr)[0]);
 	fclose(image_data);
-	uninitialize_pru();
+
 	return(0);
 }
 
