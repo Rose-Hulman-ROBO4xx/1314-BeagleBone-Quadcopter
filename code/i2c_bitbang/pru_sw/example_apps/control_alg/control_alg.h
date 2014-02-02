@@ -5,7 +5,8 @@
 #define PWM_3_ADDRESS 8
 #define ALPHA		.9
 #define BETA		(1-ALPHA)
-#define G		2048
+#define G		16384
+//#define G		2048
 #define AM33XX
 #define CALIBRATION_SAMPLES 256
 #define PI 3.141592653589793238462643383279502884197169399375105
@@ -17,7 +18,8 @@
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 #define BIAS_INCREASE_RATE 1
-#define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
+#define GYRO_SENSITIVITY 250
+//#define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 
 #define P_DEF		20 // 10
