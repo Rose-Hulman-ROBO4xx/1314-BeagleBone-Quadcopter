@@ -13,8 +13,8 @@ void signal_handler(int sig){
 }
 
 void get_set_point(set_point_t * goal){
-	goal->pitch = 30;
-	goal->roll = 0;
+	goal->pitch = 0;
+	goal->roll = 30;
 	goal->yaw = 0;
 	goal->z = 0;
 }
@@ -236,7 +236,7 @@ int main (void)
 	init_filter(theta_y, 1, 0, G);
 
 	
-	int bias = 0;
+	double bias = 0;
 	int count = 0;
 	while(pruDataMem_int[0] != 0){
 		if (bias < BIAS_MAX){
@@ -262,7 +262,7 @@ int main (void)
 
 	uninitialize_pru();
 	fclose(response_log);
-	free(theta_p);
+	/*free(theta_p);
 	free(theta_r);
 	free(theta_y);
 	free(z_pos);
@@ -273,6 +273,7 @@ int main (void)
 	free(PID_yaw);
 	free(PID_z);
 	free(goal);
+	*/
 	return(0);
 }
 
@@ -336,6 +337,7 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 
 	P = PID_x->kP * delta_error;
 	I = (PID_x->kI * (PID_x->I + delta_error)) * DT;
+	I = MIN(MAX_I, MAX(MIN_I,I))
 	PID_x->I = I;
 	D = PID_x->kD*((delta_error - PID_x->D) / DT);
 	PID_x->D = delta_error;
