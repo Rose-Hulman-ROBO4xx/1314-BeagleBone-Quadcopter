@@ -18,7 +18,7 @@ ASSEM_FILES += control_alg/control_alg.p
 
 BIN_FILES :=
 BIN_FILES += imu.bin
-BIN_FILES += pwm.bin
+BIN_FILES += pwm_control_alg.bin
 #BIN_FILES += test.bin
 #BIN_FILES += blink.bin
 BIN_FILES += control_alg.bin

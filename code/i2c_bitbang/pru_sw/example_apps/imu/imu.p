@@ -132,9 +132,14 @@ IMU_MAIN:
 	mov ARG_0.b2, 0x06
 	call WRITE_BYTE
 
+	mov ARG_0.b0, 0x68 //set the gyro sensitivity
+	mov ARG_0.b1, 0x1B
+	mov ARG_0.b2, 0b00000000
+	call WRITE_BYTE
+
 	mov ARG_0.b0, 0x68 //set the accelerometer sensitivity
 	mov ARG_0.b1, 0x1C
-	mov ARG_0.b2, 0b00001000
+	mov ARG_0.b2, 0b00000000
 	call WRITE_BYTE
 
 	mov ARG_0.b0, 0x68 //set the sample rate

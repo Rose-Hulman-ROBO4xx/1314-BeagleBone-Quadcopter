@@ -3,10 +3,10 @@
 #define PWM_1_ADDRESS 10
 #define PWM_2_ADDRESS 11
 #define PWM_3_ADDRESS 8
-#define ALPHA		.9
+#define ALPHA		.99
 #define BETA		(1-ALPHA)
-#define G		16384
-//#define G		2048
+//#define G		16384
+#define G		2048
 #define AM33XX
 #define CALIBRATION_SAMPLES 256
 #define PI 3.141592653589793238462643383279502884197169399375105
@@ -18,14 +18,15 @@
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 #define BIAS_INCREASE_RATE 1
-#define GYRO_SENSITIVITY 250
-//#define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
+//#define GYRO_SENSITIVITY 250
+#define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
 #define MAX_I		1000
 #define MIN_I		-MAX_I
-#define P_DEF		25 // 10
-#define I_DEF		15  // 5	
-#define D_DEF		20  // 7
+
+#define P_DEF		35 // 25
+#define I_DEF		15  // 15	
+#define D_DEF		20  // 20
 
 #define BIAS0 20000.0f
 #define BIAS1 20000.0f
@@ -38,7 +39,7 @@
 #define MULT3 1.00f
 
 #define BIAS_MAX 10000 //50000
-
+#define PID_FILE "pid_values.txt"
 typedef struct imu_data_t{
 	double x_a;
 	double y_a;
@@ -102,3 +103,4 @@ void init_PID(PID_t * PID_x, double kP, double kI, double kD);
 void get_set_point(set_point_t * goal);
 double PID_loop(double goal, PID_t * PID_x, double value);
 void signal_handler(int sig);
+void load_pid_values(PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z);

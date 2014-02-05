@@ -14,7 +14,7 @@ void signal_handler(int sig){
 
 void get_set_point(set_point_t * goal){
 	goal->pitch = 0;
-	goal->roll = 30;
+	goal->roll = 20;
 	goal->yaw = 0;
 	goal->z = 0;
 }
@@ -48,7 +48,7 @@ void get_imu_frame(imu_data_t * imu_frame){
 	while(!pruDataMem_int[1]){ // wait for pru to signal that new data is available
 	}
 	pruDataMem_int[1] = 0;
-		imu_frame->x_a = (signed short)pruDataMem_int[2];
+	imu_frame->x_a = (signed short)pruDataMem_int[2];
         imu_frame->y_a = (signed short)pruDataMem_int[3];
         imu_frame->z_a = (signed short)pruDataMem_int[4];
         imu_frame->x_g = (signed short)pruDataMem_int[5];
@@ -166,6 +166,30 @@ void output_pwm(pwm_frame_t * pwm_frame_next, pru_pwm_frame_t * pwm_out){
 	*(pwm_out->three) = pwm_frame_next->three;
 }
 
+void load_pid_values(PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z){
+	FILE * fp = fopen(PID_FILE, "r");
+	if (fp == NULL){
+		fprintf(stderr, "Couldn't open the %s :(\n", PID_FILE);
+		exit(-1);
+	}
+	int pp, pi, pd, rp, ri, rd, yp, yi, yd, zp, zi, zd;
+	int num_values = fscanf(fp, "%d, %d, %d\n%d, %d, %d\n%d, %d, %d\n%d, %d, %d", 
+			&pp, &pi, &pd,
+			&rp, &ri, &rd,
+			&yp, &yi, &yd,
+			&zp, &zi, &zd);
+	if (num_values != 12 || num_values == EOF){
+		perror("scanf");
+		fprintf(stderr, "You are a failure.  Please reformat your %s file.\n", PID_FILE);
+		exit(-1);
+	}
+	init_PID(PID_pitch, pp, pi, pd);
+	init_PID(PID_roll, rp, ri, rd);
+	init_PID(PID_yaw, yp, yi, yd);
+	init_PID(PID_z, zp, zi, zd);
+	fclose(fp);
+}
+
 int main (void)
 {
 
@@ -188,6 +212,8 @@ int main (void)
 		exit(-1);
 	}
 	fprintf(response_log, "bias,pitch,cf_pitch,roll,cf_roll,yaw,cf_yaw,z,m0,m1,m2,m3\n");
+	load_pid_values(PID_pitch, PID_roll, PID_yaw, PID_z);
+	get_set_point(goal);
 
 	initialize_pru();
 	pru_pwm_frame_t * pwm_out = get_pwm_pointer();
@@ -216,12 +242,6 @@ int main (void)
 //		printf("cal data: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 		fclose(calib_file);
 	}
-	// P,I,D values should probably be different between the different loops (Mike)
-	init_PID(PID_pitch, P_DEF+1, I_DEF, D_DEF);
-	init_PID(PID_roll, P_DEF, I_DEF, D_DEF);
-	init_PID(PID_yaw, P_DEF, I_DEF, D_DEF);
-	init_PID(PID_z, P_DEF, I_DEF, D_DEF);
-	get_set_point(goal);
 
         signal(SIGINT, signal_handler);
 	printf("check calibration data for sanity: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
@@ -229,7 +249,7 @@ int main (void)
 	*z_pos = 0;
 	*z_vel = 0;
 
-	imu_data_t * imu_frame = malloc(sizeof(comp_filter_t));
+	imu_data_t * imu_frame = malloc(sizeof(imu_data_t));
 	
 	init_filter(theta_p, ALPHA, BETA, G);
 	init_filter(theta_r, ALPHA, BETA, G);
@@ -250,7 +270,11 @@ int main (void)
 		output_pwm(next_pwm, pwm_out);
 
 		if (count == 20){
-			printf("bias: % 03d, pitch: % 03.5f, cf_pitch: % 03.5f, roll: % 03.5f, cf_roll: % 03.5f, yaw: % 03.5f, cf->yaw: % 03.5f, z: % 03.5f m0: %d, m1: %d, m2: %d, m3: %d\n", bias, theta_p->th, cf->pitch, theta_r->th,cf->roll,theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+			printf("bias: % 03f", bias);
+			printf(", pitch: % 03.5f, cf_pitch: % 03.5f", theta_p->th, cf->pitch);
+			printf(", roll: % 03.5f, cf_roll: % 03.5f", theta_r->th, cf->roll);
+			printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
+			printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 			count = 0;
 		}
 		count++;
@@ -262,7 +286,7 @@ int main (void)
 
 	uninitialize_pru();
 	fclose(response_log);
-	/*free(theta_p);
+	free(theta_p);
 	free(theta_r);
 	free(theta_y);
 	free(z_pos);
@@ -273,7 +297,10 @@ int main (void)
 	free(PID_yaw);
 	free(PID_z);
 	free(goal);
-	*/
+	free(pwm_out);
+	free(next_pwm);	
+	free(cf);
+	free(imu_frame);
 	return(0);
 }
 
@@ -337,7 +364,7 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 
 	P = PID_x->kP * delta_error;
 	I = (PID_x->kI * (PID_x->I + delta_error)) * DT;
-	I = MIN(MAX_I, MAX(MIN_I,I))
+	I = MIN(MAX_I, MAX(MIN_I,I));
 	PID_x->I = I;
 	D = PID_x->kD*((delta_error - PID_x->D) / DT);
 	PID_x->D = delta_error;
