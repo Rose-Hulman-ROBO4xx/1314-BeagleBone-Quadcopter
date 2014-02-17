@@ -20,7 +20,11 @@ You can't just move the pins willy nilly.  You need to know all the design const
 ,CAM_STA (?),N/C,,,,,,,,,,,,,,,,,
 ,CAM_RCK,P8_27,PRU1 output,,,,,,,,,,,,,,,,
 ,CAM_WE,P8_29,PRU1 output,,,,,,,,,,,,,,,,
+<<<<<<< HEAD
 ,CAM_OE,GND,PRU1 output,,,,,,,,,,,,,,,,
+=======
+,CAM_OE,P8_28,PRU1 output,,,,,,,,,,,,,,,,
+>>>>>>> e181ac5411a31fecd9ad79d07ecf155442afec61
 ,CAM_WRST,CAM_SYNC,,,,,,,,,,,,,,,,,
 ,CAM_RRST,P8_30,PRU1 output,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
