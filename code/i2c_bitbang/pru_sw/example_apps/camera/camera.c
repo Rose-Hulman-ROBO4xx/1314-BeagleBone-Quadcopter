@@ -140,6 +140,8 @@ int main (int argc, char ** argv)
 		printf("%d buffer=%d\n", pruDataMem_int[100], buffer);
 
 		fwrite(pru1_ddr+buffer*320*240*2, sizeof(uint8_t), 320*203*2, image_data);
+
+		fflush(image_data);
 	}
 	uninitialize_pru();
 	fflush(image_data);

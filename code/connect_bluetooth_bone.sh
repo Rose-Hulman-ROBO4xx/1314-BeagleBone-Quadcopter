@@ -38,7 +38,7 @@ rfcomm listen hci0 11 &
 echo "starting pppd"
 rm -f /var/lock/*rfcomm0*
 #921600
-until pppd proxyarp mtu 1280 persist nodeflate noauth lcp-echo-interval 10 crtscts lock 10.10.1.2:10.10.1.1 /dev/rfcomm0 100000000
+until pppd proxyarp mtu 1280 persist nodeflate noauth lcp-echo-interval 10 crtscts lock 10.10.1.2:10.10.1.1 /dev/rfcomm0 1000000000000
 do
 	echo "retrying"
 	sleep 1
