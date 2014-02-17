@@ -13,9 +13,9 @@ INCDIR_XENOMAI?= /usr/xenomai/include
 BINDIR?=../bin
 
 CFLAGS+= -Wall -I$(INCDIR_APP_LOADER) -I$(INCDIR_XENOMAI) $(XENO_POSIX_CFLAGS) -D__DEBUG -O2 -mtune=cortex-a8 -march=armv7-a -g
-LDFLAGS+=-L$(LIBDIR_APP_LOADER) $(XENO_POSIX_LIBS) -lm -lprussdrv -lrt -lnative 
+LDFLAGS+=-L$(LIBDIR_APP_LOADER) $(XENO_POSIX_LIBS) -lm -lprussdrv -lrt -lnative -lpthread
 
-# -lprussdrv -lpthread -lm -lnative -lxenomai -lrt -lpthread
+# -lprussdrv -lm -lnative -lxenomai -lrt -lpthread
 OBJDIR=obj
 TARGET=$(BINDIR)/control_alg
 

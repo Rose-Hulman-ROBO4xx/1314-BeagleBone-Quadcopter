@@ -20,7 +20,7 @@ var socket;
 var firstconnect = true;
 var init_home=1;
 var eventJoystickFlag = 0;
-var controlStringArray = [0, 0, 0, 0];
+var controlStringArray = ["-32768", "0", "0", "0"];
 
 function connect() {
 	if (firstconnect) {
@@ -353,6 +353,7 @@ if(navigator.webkitGetGamepads){
 
 function controlDataString(index, value){
 	console.log(index, value);
+	value = value.toString();
 	switch(index){
 		//TODO: implement flag control
 //		case FLAG:
@@ -416,8 +417,8 @@ function sendControlData(){
 }
 
 function startController(){
-//	while(1){
-//		updateStatus();
-//		wait(3000);
-//	}
+	while(1){
+	updateStatus();
+		wait(3000);
+	}
 }

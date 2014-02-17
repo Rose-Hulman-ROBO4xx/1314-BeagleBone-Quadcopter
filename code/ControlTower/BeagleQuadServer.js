@@ -14,14 +14,14 @@ var port = 1337, // Port to listen on
     connectCount = 0,	// Number of connections to server
     errCount = 0;	// Counts the AIN errors.
 
-var controlDataFile = '/tmp/BeagleQuad_ControlData.txt';
+var controlDataFile = '/tmp/asdf';
 
 var stream = fs.createWriteStream(controlDataFile, {flags: 'w'});
 
 var lines;
 
 function writeToFile(input){
-	stream.write("joy:"+input.join(","));
+	stream.write("joy:"+input.join(",")+"\n");
 }
 
 // Create a server and get it listening
@@ -77,14 +77,9 @@ io.sockets.on('connection', function (socket) {
 
 	
 
-    socket.on('controlEvent', function (controlDataArray){
-		var strToWrite = "";
-		controlDataArray.forEach(function(value){
-			strToWrite = strToWrite.concat(String(value));
-		});
-		strToWrite = strToWrite.concat("\n");
-		writeToFile(strToWrite);
-	});
+    socket.on('controlEvent', function(controlDataArray){
+	writeToFile(controlDataArray);
+    });
 
 
     // Boilerplate to deal with connection managing
