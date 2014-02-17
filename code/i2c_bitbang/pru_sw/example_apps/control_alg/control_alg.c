@@ -91,11 +91,11 @@ int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t
 					zero_throttle_seen =1;
 				}
 
-				roll_goal/=-2000.0f;
+				roll_goal/=-1500.0f;
 
-				pitch_goal/=2000.0f;
+				pitch_goal/=1500.0f;
 
-				yaw_goal/=(11796*4); //turn 90 degrees per second
+				yaw_goal/=(11796*3); //turn 90 degrees per second
 			}
 			pch = strtok(NULL, "\n");
 		}
@@ -168,7 +168,6 @@ void get_imu_frame(imu_data_t * imu_frame){
 	//}
 
 
-	pruDataMem_int[1] = 0;
 	imu_frame->x_a = (signed short)pruDataMem_int[2];
 	imu_frame->y_a = (signed short)pruDataMem_int[3];
 	imu_frame->z_a = (signed short)pruDataMem_int[4];
@@ -256,12 +255,14 @@ imu_data_t * get_calibration_data(){
 		
 		pruDataMem_int[13] = 0;
 		get_imu_frame(&imu_data);
+		pruDataMem_int[1] = 0;
 	}
 
 	for (i = 0; (i < CALIBRATION_SAMPLES); i++){
 		
 		pruDataMem_int[13] = 0;
 		get_imu_frame(&imu_data);
+		pruDataMem_int[1] = 0;
 
 		calib_data->x_a += imu_data.x_a;
 		calib_data->y_a += imu_data.y_a;
@@ -292,6 +293,7 @@ void output_pwm(pwm_frame_t * pwm_frame_next, pru_pwm_frame_t * pwm_out){
 	*(pwm_out->one) = pwm_frame_next->one;
 	*(pwm_out->two) = pwm_frame_next->two;
 	*(pwm_out->three) = pwm_frame_next->three;
+	pruDataMem_int[1] = 0;
 
 }
 
@@ -417,7 +419,7 @@ void demo (void * arg)
 			printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
 			printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 			*/
-			//printf("I: %f D: %f pitch: %f\n", PID_roll->I, PID_roll->D, theta_r->th);
+			printf("I: %f D: %f pitch: %f\n", PID_roll->I, PID_roll->D, theta_r->th);
 			//printf("goal: pitch: %f roll: %f yaw: %f z: %f\n", goal->pitch, goal->roll, goal->yaw, bias);
 			//printf("goalyaw: %f\n", goal->yaw);
 
@@ -575,7 +577,8 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 	P = delta_error;
 	I = (PID_x->I + PID_x->kI*delta_error*DT);
 	I = MIN(MAX_I, MAX(MIN_I,I));
-	PID_x->I = I*.998;
+	//PID_x->I = I*.998;
+	PID_x->I = I;
 	D = PID_x->D - value;
 	PID_x->D = value;
 
