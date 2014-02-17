@@ -21,9 +21,7 @@ var stream = fs.createWriteStream(controlDataFile, {flags: 'w'});
 var lines;
 
 function writeToFile(input){
-	for(var i = 0; i < input.length; i++){
-		stream.write(input[i]);
-	}
+	stream.write("joy:"+input.join(","));
 }
 
 // Create a server and get it listening

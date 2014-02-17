@@ -20,7 +20,7 @@ var socket;
 var firstconnect = true;
 var init_home=1;
 var eventJoystickFlag = 0;
-var controlStringArray = [0, 0, 0, 0, 0];
+var controlStringArray = [0, 0, 0, 0];
 
 function connect() {
 	if (firstconnect) {
