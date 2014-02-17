@@ -11,12 +11,12 @@ PS1=\[`if [[ $? = 0 ]]; then echo '\e[32m\u@beaglebone\e[0m'; else echo '\e[31m\
 SHLVL=1
 HOME=/home/root
 LOGNAME=root
-
-
+rm -f /tmp/BeagleQuad_ControlFifo.txt
+mkfifo /tmp/BeagleQuad_ControlFifo.txt
 cd /home/debian/1314-BeagleBone-Quadcopter/code/i2c_bitbang/pru_sw
 ./setup_pru.sh
 cd example_apps
 cd bin
 nice -n -20 ./control_alg &
-netcat -l -p 1234 > /tmp/asdf
+netcat -l -p 1234 > /tmp/BeagleQuad_ControlFifo.txt
 

@@ -16,6 +16,9 @@ var port = 1337, // Port to listen on
 
 var controlDataFile = '/tmp/BeagleQuad_ControlFifo.txt';
 
+child_process.exec("rm "+controlDataFile)
+child_process.exec("mkfifo "+ controlDataFile)
+
 var stream = fs.createWriteStream(controlDataFile, {flags: 'w'});
 
 var lines;
