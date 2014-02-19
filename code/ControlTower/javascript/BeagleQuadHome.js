@@ -1,4 +1,5 @@
 // Boilerplate code for socket io stuff
+var joystick = new (require('joystick'))(0, 3500, 350); //install by "npm install joystick"
 
 "use strict";
 
@@ -190,4 +191,22 @@ document.onkeydown = function(e) {
 
 	// Prevents scrolling of the page (default behavior)
 	e.preventDefault();
+}
+
+joystick.on('axis', joystick_logger);
+
+// go ahead and pass the message along in JSON form though... do something like {direction: 0, value: message}
+function joystick_logger(message){
+    if (message['number']==0){
+        socket.emit("joystickMoved",{"direction":0, "value":message});
+    }
+    if (message['number']==1){
+        socket.emit("joystickMoved",{"direction":1, "value":message});
+    }
+    if (message['number']==2){
+        socket.emit("joystickMoved",{"direction":2, "value":message});
+    }
+    if (message['number']==4){
+        socket.emit("joystickMoved",{"direction":4, "value":message});
+    }
 }
