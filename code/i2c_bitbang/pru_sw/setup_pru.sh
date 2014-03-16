@@ -6,4 +6,3 @@ cp ./devicetree/BB-CAMERA-00A0.dtbo /lib/firmware
 echo BB-CAMERA > /sys/devices/bone_capemgr.*/slots
 echo 30 > /sys/class/gpio/export
 echo 60 > /sys/class/gpio/export
-./start_cam_clk.js
