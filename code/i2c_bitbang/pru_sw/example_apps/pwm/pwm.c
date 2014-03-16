@@ -144,7 +144,11 @@ int main (void)
 
 	while(pruDataMem_int[0] != 0){
 
-		scanf("%d %d %d %d", &(next_pwm->zero), &(next_pwm->one), &(next_pwm->two), &(next_pwm->three));
+		//scanf("%d %d %d %d", &(next_pwm->zero), &(next_pwm->one), &(next_pwm->two), &(next_pwm->three));
+		if (pruDataMem_int[2]){
+			printf("ping: %d                \r", pruDataMem_int[1]/5800);
+			pruDataMem_int[2] = 0;
+		}
 		next_pwm->zero *= 1000;
 		next_pwm->one *= 1000;
 		next_pwm->two *= 1000;
