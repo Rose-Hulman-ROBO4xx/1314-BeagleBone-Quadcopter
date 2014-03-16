@@ -81,18 +81,18 @@ io.sockets.on('connection', function (socket) {
         Server side callback for our key bindings
     */
     socket.on('keyPress', function (key, value) {
-	//console.log("CONSOLE LOG... " + key + ":"+value);
+console.log("CONSOLE LOG... " + key + ":"+value);
 	writeToFile(key+":"+value);
     });
 
     socket.on('controllerButtonEvent', function (key, value) {
-  //      	console.log("controllerButtonEvent: button:" + key + " value:" + value);
+      	console.log("controllerButtonEvent: button:" + key + " value:" + value);
 		writeToFile(key+":"+value);
 	    // pick off which value was sent via switch case and write to file
     });
 
     socket.on('controllerAxesEvent', function(key, value){
-//        console.log("controllerButtonEvent: axes:" + key + " value:" + value);
+        console.log("controllerButtonEvent: axes:" + key + " value:" + value);
 	writeToFile(key+":"+value);
 	   });
 
