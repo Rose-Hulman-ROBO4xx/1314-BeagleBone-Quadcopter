@@ -78,7 +78,7 @@ void initialize_pru(){
 
     pruDataMem_int[0] = 1;
     pruDataMem_int[2] = PRU1_DDR;
-    pruDataMem_int[3] = PRU1_DDR + 640*480;
+    pruDataMem_int[3] = PRU1_DDR + 320*240*10;
     printf("WE DIDN'T ALL DIE!\n");
     fflush(stdout);
     
@@ -119,18 +119,16 @@ int main (void)
 
 	initialize_pru();
 	start_pru();
-	uninitialize_pru();
 	FILE * image_data = fopen("image.data", "w");
 	if (image_data == NULL){
 		fprintf(stderr, "Failed to open image output file");
 		exit(-1);
 	}
 	int i;
-	/*for (i = 0; i < 640*480*2; i++){
-		//printf("%d\n", pru1_ddr[i]);
-		fwrite(&(pru1_ddr[i]), 1, 1, image_data);
-	}*/
-	fwrite(pru1_ddr, sizeof(uint8_t), 640*480*2, image_data);
+
+	uninitialize_pru();
+	fwrite(pru1_ddr, sizeof(uint8_t), 320*203*2, image_data);
+	fflush(image_data);
 	printf("%d\n", ((volatile uint8_t *)pru1_ddr)[0]);
 	fclose(image_data);
 

@@ -34,7 +34,7 @@
 #define numCols r8
 #define numRows r9
 #define exit r6
-#define num_bytes 640*480*2
+#define num_bytes 153600*4
 #define NUM_BYTES r17
 MEMACCESSPRUDATARAM:
 
@@ -115,13 +115,12 @@ MEMACCESSPRUDATARAM:
 		DELAY
 		DELAY
 		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
 
-			MOV   r0.b0, CAM_BITS.b0
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
+			MOV   r0.b1, CAM_BITS.b0
 			CLR R30, R30, CAM_RCK
 		DELAY
 		DELAY
@@ -131,23 +130,40 @@ MEMACCESSPRUDATARAM:
 		DELAY
 		DELAY
 		DELAY
-			SBBO  r0.b0, currBuff, pixelByteCount, 1
-			ADD   pixelByteCount, pixelByteCount, 1
+		DELAY
+		DELAY
+			SET R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+
+			MOV   r0.b0, CAM_BITS.b0
+			CLR R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+			SBBO  r0.b0, currBuff, pixelByteCount, 2
+			ADD   pixelByteCount, pixelByteCount, 2
+
 			QBGE  Pixels, pixelByteCount, NUM_BYTES
 
-		QBNE Loop, r15, 5
-
-	MOV   r0, 0
-	SBBO  r0, swapBuff, 0, 4
-	MOV   r0, buff0
-	MOV   buff0, buff1
-	MOV   buff1, r0
-	MOV   currBuff, buff0
-
 	LBBO r0, exit, 0, 4
-	QBNE Quit, r15, 5
+	QBEQ Quit, r0, 0
 
-	//QBA Loop
+	QBA Loop
 
 
 
