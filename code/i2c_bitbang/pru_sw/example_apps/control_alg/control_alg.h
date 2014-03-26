@@ -38,7 +38,7 @@
 #define MULT2 1.00f
 #define MULT3 1.00f
 
-#define BIAS_MAX 50000
+#define BIAS_MAX 30000
 #define PID_FILE "pid_values.txt"
 typedef struct imu_data_t{
 	double x_a;

@@ -258,12 +258,22 @@ int main (void)
 	
 	double bias = 0;
 	int count = 0;
+	int time = 0;
 	while(pruDataMem_int[0] != 0){
 		if (bias < BIAS_MAX){
-			bias += 5;
+
+			bias = BIAS_MAX/(1.0f+exp(-0.01656695d*time+6.2126d));
+		} else{
+			bias = BIAS_MAX;
 		}
 		
 		get_imu_frame(imu_frame);
+		count++;
+		if (imu_frame->sample_num != count){
+			printf("Skipped %d frames\n", imu_frame->sample_num-count+1);
+			count = imu_frame->sample_num;
+		}
+
 		calibrate_imu_frame(imu_frame, calib_data);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
 		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf);
@@ -276,10 +286,10 @@ int main (void)
 			printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
 			printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 		}
-		count++;
 
 		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 //		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
+		time += 1;
 	}
 	printf("exiting...\n");
 
