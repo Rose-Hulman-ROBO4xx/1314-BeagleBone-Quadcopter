@@ -12,18 +12,19 @@ void signal_handler(int sig){
 	pruDataMem_int[0] = 0;
 }
 
-void get_set_point(set_point_t * goal, imu_data_t * imu_data){
-	static double integral = 0;
-	static double last_roll = 0;
-	goal->pitch = 0;
+void get_set_point(set_point_t * goal, comp_filter_t * theta_r){
+	//static double integral = 0;
+	//static double last_roll = 0;
+
+	goal->pitch = -20;
 	goal->roll = 0;
 	goal->yaw = 0;
 	goal->z = 0;
-	double error = 0;
-	error = imu_data->x_g;
-	integral += error;
-	goal->roll = error*1.5 + integral*.5;
-
+	//double error = 0;
+	//error = 0-theta_r->th;
+	//integral += error;
+	//goal->pitch = error*1.5 + integral*.5;
+	//goal->pitch = 0;
 }
 
 void init_PID(PID_t * PID_x, double kP, double kI, double kD){
@@ -283,17 +284,22 @@ int main (void)
 
 		calibrate_imu_frame(imu_frame, calib_data);
 
-		get_set_point(goal, imu_frame);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
-		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf);
+		get_set_point(goal, theta_p);
+		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf, imu_frame);
 		output_pwm(next_pwm, pwm_out);
 
 		if ((count % 20) == 0){
+			
 			printf("bias: % 03f", bias);
 			printf(", pitch: % 03.5f, cf_pitch: % 03.5f", theta_p->th, cf->pitch);
 			printf(", roll: % 03.5f, cf_roll: % 03.5f", theta_r->th, cf->roll);
 			printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
 			printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
+			printf("I: %f\n", PID_pitch->I);
+			printf("D: %f\n", PID_pitch->D);
+			
+			printf("gyro: %f\n", (imu_frame->x_g/GYRO_MAX_RAW)*GYRO_SENSITIVITY);
 		}
 
 		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
@@ -346,7 +352,10 @@ void filter_loop(imu_data_t * imu_frame, comp_filter_t * theta_p, comp_filter_t 
 	calculate_next_comp_filter(theta_y, imu_frame->z_a, imu_frame->z_g, DT);
 }
 
-void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf){
+void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf, imu_data_t * imu_data){
+	static double last_roll = 0;
+	double roll_rate = (imu_data->x_g/GYRO_MAX_RAW)*GYRO_SENSITIVITY;
+
 	double d_pitch = PID_loop(goal->pitch, PID_pitch, theta_p->th);
 	double d_roll = PID_loop(goal->roll, PID_roll, theta_r->th);
 	double d_yaw = PID_loop(goal->yaw, PID_yaw, theta_y->th);
@@ -381,14 +390,14 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 	double P, I, D, delta_error;
 	delta_error = goal - value;
 
-	P = PID_x->kP * delta_error;
-	I = (PID_x->kI * (PID_x->I + delta_error)) * DT;
+	P = delta_error;
+	I = (PID_x->I + delta_error*DT);
 	I = MIN(MAX_I, MAX(MIN_I,I));
 	PID_x->I = I;
-	D = PID_x->kD*((delta_error - PID_x->D) / DT);
+	D = ((delta_error - PID_x->D));
 	PID_x->D = delta_error;
 
-	return P + I + D;
+	return P*PID_x->kP + I*PID_x->kI + D*PID_x->kD/DT;
 }
 
 
