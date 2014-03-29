@@ -31,7 +31,7 @@ CONTROL_MAIN:
 	.assign imu_data_frame, RET_VAL_0, RET_VAL_2, imu_return_data
 	.assign pwm_state_frame, R9, R12, pwm_state
 
-	call PWM_ENABLE_GPIO_AND_SET_DIRECTIONS_REV_1
+	call PWM_ENABLE_GPIO_AND_SET_DIRECTIONS
 	
 	mov pwm_state.N, PWM_MIN
 	mov pwm_state.E, PWM_MIN
@@ -40,34 +40,17 @@ CONTROL_MAIN:
 	mov r14, 0
 DATA_LOOP:
 	mov r0, 0
-	mov r1, 1000
-//	set R30, 15
-//WAIT_FOR_TRIG:
-//	sub r1, r1, 1
-//	QBLT WAIT_FOR_TRIG, r1, 0
-
-//	clr R30, 15
-//WAITING_FOR_RESPONSE:
-//	qbbc WAITING_FOR_RESPONSE, R31, 14
-//GETTING_DURATION:
-//	add r0, r0, 1
-//	qbbs GETTING_DURATION, R31, 14
-
-	sbco r0, CONST_PRUDRAM, 4, 4
-	mov r0, 1
-	sbco r0, CONST_PRUDRAM, 8, 4
 
 	lbco ARG_0,CONST_PRUDRAM, 32, 4
 	lbco ARG_1,CONST_PRUDRAM, 36, 4
 	lbco ARG_2,CONST_PRUDRAM, 40, 4
 	lbco ARG_3,CONST_PRUDRAM, 44, 4
-	call SEND_PWM_PULSE_REV_1
+	call SEND_PWM_PULSE
 	call PWM_DELAY
 	
 	lbco r13, CONST_PRUDRAM, 0, 4
 	QBEQ EXIT, R13, 0
-	QBBS DATA_LOOP, R31, 7
-	QBA DATA_LOOP
+	QBBC DATA_LOOP, R31, 14
 EXIT:
 	mov r3, 0
 	sbco r3, CONST_PRUDRAM, 0, 4

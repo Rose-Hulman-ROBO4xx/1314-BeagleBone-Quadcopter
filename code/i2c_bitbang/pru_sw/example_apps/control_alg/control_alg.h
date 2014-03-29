@@ -1,8 +1,8 @@
 #define PRU_NUM 	0
-#define PWM_0_ADDRESS 9
-#define PWM_1_ADDRESS 10
-#define PWM_2_ADDRESS 11
-#define PWM_3_ADDRESS 8
+#define PWM_0_ADDRESS 11
+#define PWM_1_ADDRESS 8
+#define PWM_2_ADDRESS 10
+#define PWM_3_ADDRESS 9
 #define ALPHA		.99
 #define BETA		(1-ALPHA)
 //#define G		16384
@@ -14,7 +14,7 @@
 #define DT		.005f
 #define PWM_OFF		110000
 #define PWM_MIN		110000
-#define PWM_MAX		160000
+#define PWM_MAX		130000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 #define BIAS_INCREASE_RATE 1
@@ -38,7 +38,7 @@
 #define MULT2 1.00f
 #define MULT3 1.00f
 
-#define BIAS_MAX 30000
+#define BIAS_MAX 5000
 #define PID_FILE "pid_values.txt"
 typedef struct imu_data_t{
 	double x_a;
@@ -100,7 +100,7 @@ void uninitialize_pru();
 imu_data_t * get_calibration_data();
 void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf);
 void init_PID(PID_t * PID_x, double kP, double kI, double kD);
-void get_set_point(set_point_t * goal);
+void get_set_point(set_point_t * goal, imu_data_t * imu_data);
 double PID_loop(double goal, PID_t * PID_x, double value);
 void signal_handler(int sig);
 void load_pid_values(PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z);

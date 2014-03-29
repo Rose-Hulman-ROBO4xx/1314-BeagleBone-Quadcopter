@@ -1,3 +1,4 @@
+
 //#include "pwm.hp"
 #include "conventions.hp"
 
@@ -25,21 +26,10 @@ SEND_PWM_PULSE:
 	sub SP_reg, SP_reg, 16
 	sbco r0, CONST_PRUDRAM, SP_reg, 16
 	//set the channel 0 and channel 1 high
-	mov r1, 1 << PWM_0_BIT
-	mov r2, PWM_0_BANK | GPIO_SETDATAOUT
-	sbbo r1, r2, 0, 4
-
-	mov r1,  1 << PWM_1_BIT
-	mov r2, PWM_1_BANK | GPIO_SETDATAOUT
-	sbbo r1, r2, 0, 4
-
-	mov r1,  1 << PWM_2_BIT
-	mov r2, PWM_2_BANK | GPIO_SETDATAOUT
-	sbbo r1, r2, 0, 4
-
-	mov r1,  1 << PWM_3_BIT
-	mov r2, PWM_3_BANK | GPIO_SETDATAOUT
-	sbbo r1, r2, 0, 4
+	set r30,  PWM_0_BIT
+	set r30,  PWM_1_BIT
+	set r30,  PWM_2_BIT
+	set r30,  PWM_3_BIT
 	
 	mov r0, 0	//counting variable
 	mov r3, 0b00001111 //need to clear all these channels
@@ -48,10 +38,7 @@ PWM_PULSE_LOOP:
 	qblt SKIP_0, ARG_0, r0
 	add r0, r0, 1
 	qbbc SKIP_0, r3, 0
-
-	mov r1,  1 << PWM_0_BIT
-	mov r2, PWM_0_BANK | GPIO_CLEARDATAOUT
-	sbbo r1, r2, 0, 4
+	clr r30, PWM_0_BIT
 	clr r3, r3, 0
 	
 	add r0, r0, 4
@@ -61,10 +48,8 @@ SKIP_0:
 	add r0, r0, 1
 	qbbc SKIP_1, r3, 1
 
-
-	mov r1, 1 << PWM_1_BIT
-	mov r2, PWM_1_BANK | GPIO_CLEARDATAOUT
-	sbbo r1, r2, 0, 4
+	
+	clr r30, PWM_1_BIT
 	clr r3, r3, 1
 
 	add r0, r0, 4
@@ -76,9 +61,7 @@ SKIP_1:
 	qbbc SKIP_2, r3, 2
 
 
-	mov r1,  1 << PWM_2_BIT
-	mov r2, PWM_2_BANK | GPIO_CLEARDATAOUT
-	sbbo r1, r2, 0, 4
+	clr r30, PWM_2_BIT
 	clr r3, r3, 2
 	
 	add r0, r0, 4
@@ -89,9 +72,7 @@ SKIP_2:
 	qbbc SKIP_3, r3, 3
 
 
-	mov r1,  1 << PWM_3_BIT
-	mov r2, PWM_3_BANK | GPIO_CLEARDATAOUT
-	sbbo r1, r2, 0, 4
+	clr r30, PWM_3_BIT
 	clr r3, r3, 3
 	
 	add r0, r0, 4
@@ -121,28 +102,6 @@ PWM_ENABLE_GPIO_AND_SET_DIRECTIONS:
 	CLR r0, r0, 4
 	SBCO r0, C4, 4, 4
 	
-	// set sda_write and scl_write pins to outputs
-	mov r1, PWM_0_BANK | GPIO_OE
-	lbbo r0, r1, 0, 4
-	clr r0, r0, PWM_0_BIT
-        sbbo r0, r1, 0, 4
-	
-	mov r1, PWM_1_BANK | GPIO_OE
-	lbbo r0, r1, 0, 4
-	clr r0, r0, PWM_1_BIT
-        sbbo r0, r1, 0, 4
-
-	mov r1, PWM_2_BANK | GPIO_OE
-	lbbo r0, r1, 0, 4
-	clr r0, r0, PWM_2_BIT
-        sbbo r0, r1, 0, 4
-	
-	mov r1, PWM_3_BANK | GPIO_OE
-	lbbo r0, r1, 0, 4
-	clr r0, r0, PWM_3_BIT
-        sbbo r0, r1, 0, 4
-	
-
 	lbco r0, CONST_PRUDRAM, SP_reg, 8 //pop r0 and r1 off of stack
 	add SP_reg, SP_reg, 8
 
@@ -150,6 +109,5 @@ PWM_ENABLE_GPIO_AND_SET_DIRECTIONS:
 	add SP_reg, SP_reg, 4
 
 	RET
-
 
 

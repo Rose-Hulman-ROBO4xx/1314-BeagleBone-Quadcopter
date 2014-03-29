@@ -12,11 +12,18 @@ void signal_handler(int sig){
 	pruDataMem_int[0] = 0;
 }
 
-void get_set_point(set_point_t * goal){
+void get_set_point(set_point_t * goal, imu_data_t * imu_data){
+	static double integral = 0;
+	static double last_roll = 0;
 	goal->pitch = 0;
-	goal->roll = 20;
+	goal->roll = 0;
 	goal->yaw = 0;
 	goal->z = 0;
+	double error = 0;
+	error = imu_data->x_g;
+	integral += error;
+	goal->roll = error*1.5 + integral*.5;
+
 }
 
 void init_PID(PID_t * PID_x, double kP, double kI, double kD){
@@ -128,7 +135,7 @@ imu_data_t * get_calibration_data(){
 	
 	int i;
 	printf("clearing DLPF on imu..\n");
-	for (i = 0; (i < 200); i++){
+	for (i = 0; (i < 1000); i++){
 		get_imu_frame(&imu_data);
 	}
 
@@ -213,7 +220,6 @@ int main (void)
 	}
 	fprintf(response_log, "bias,pitch,cf_pitch,roll,cf_roll,yaw,cf_yaw,z,m0,m1,m2,m3\n");
 	load_pid_values(PID_pitch, PID_roll, PID_yaw, PID_z);
-	get_set_point(goal);
 
 	initialize_pru();
 	pru_pwm_frame_t * pwm_out = get_pwm_pointer();
@@ -260,6 +266,7 @@ int main (void)
 	int count = 0;
 	int time = 0;
 	while(pruDataMem_int[0] != 0){
+
 		if (bias < BIAS_MAX){
 
 			bias = BIAS_MAX/(1.0f+exp(-0.01656695d*time+6.2126d));
@@ -275,6 +282,8 @@ int main (void)
 		}
 
 		calibrate_imu_frame(imu_frame, calib_data);
+
+		get_set_point(goal, imu_frame);
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
 		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf);
 		output_pwm(next_pwm, pwm_out);
@@ -332,8 +341,8 @@ void filter_loop(imu_data_t * imu_frame, comp_filter_t * theta_p, comp_filter_t 
 	//forward is +y is towards the ethernet port
 	//right is +x is header P9
 	//up is +z is the vector pointing from the cape to the beaglebone
-	calculate_next_comp_filter(theta_p, imu_frame->y_a, -imu_frame->x_g, DT);
-	calculate_next_comp_filter(theta_r, imu_frame->x_a, imu_frame->y_g, DT);
+	calculate_next_comp_filter(theta_p, -imu_frame->y_a, imu_frame->x_g, DT);
+	calculate_next_comp_filter(theta_r, -imu_frame->x_a, -imu_frame->y_g, DT);
 	calculate_next_comp_filter(theta_y, imu_frame->z_a, imu_frame->z_g, DT);
 }
 
@@ -347,6 +356,7 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	cf->yaw = d_yaw;
 	
 	d_z = 0;//FIXME
+	//
 	d_yaw = 0;
 	d_roll = 0;
 	//d_pitch = 0;

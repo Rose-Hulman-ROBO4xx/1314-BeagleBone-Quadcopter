@@ -1,7 +1,7 @@
 #ifndef CONVENTIONS_HP
 #define CONVENTIONS_HP
 
-#define RA_REG 			R15.w0 //return address register
+#define RA_REG 			R29.w0 //return address register
 .setcallreg 			RA_REG
 .origin 0
 .entrypoint CONTROL_MAIN
@@ -18,7 +18,6 @@
 #define PWM_1_BIT		1
 #define PWM_2_BIT		2
 #define PWM_3_BIT		3
-
 #define PWM_MIN			100000
 #define SCL_BANK		GPIO0
 #define SCL_BIT			31
