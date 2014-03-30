@@ -4,7 +4,13 @@
 #include <pruss_intc_mapping.h>
 #include <math.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "control_alg.h"
+
+
 volatile static void *pruDataMem;
 volatile static signed int *pruDataMem_int;
 
@@ -13,18 +19,87 @@ void signal_handler(int sig){
 }
 
 void get_set_point(set_point_t * goal, comp_filter_t * theta_r){
-	//static double integral = 0;
-	//static double last_roll = 0;
+    static int f = NULL;
+    static int num_since_last = 0;
+    static int alive = 1;
+    if (f == NULL){
+	    f = open("asdf", O_NONBLOCK | O_RDONLY);
+            if (f <=0 ){
+                printf("couldn't open control file\n");
+		pruDataMem_int[0] = 0;
+            }
+    }
 
-	goal->pitch = -20;
-	goal->roll = 0;
-	goal->yaw = 0;
-	goal->z = 0;
-	//double error = 0;
-	//error = 0-theta_r->th;
-	//integral += error;
-	//goal->pitch = error*1.5 + integral*.5;
-	//goal->pitch = 0;
+    int x;
+    char buffer[256];
+    int num_read = read(f, buffer, 256);
+    buffer[num_read] = '\0';
+    //message format:
+    //throttle,aileron,elevator,rudder
+    //throttle is negated
+    //when increased:
+    //aileron should roll right->set point increase
+    //elevator should roll back->set point decrease
+    //rudder should turn right->set point decrease
+    if (num_read>=1){
+	    num_since_last = 0;
+	    char * pch;
+	    pch = strtok(buffer, "\n");
+	    while(pch != NULL){
+		printf("%s\n", pch);
+		sscanf(pch, "%f,%f,%f,%f", &(goal->z), &(goal->roll), &(goal->pitch), &(goal->yaw));
+		printf("%f %f %f %f", goal->z, goal->roll, goal->pitch, goal->yaw);
+		printf("--\n");
+		fflush(stdout);
+		
+		goal->z = -goal->z*2.3;
+
+		goal->roll = (goal->roll+7700);
+		if (fabs(fabs(goal->roll)-700) > 0){
+			goal->roll/=2000.0f;
+		}else{
+			goal->roll = 0;
+		}
+		goal->pitch = (goal->pitch+12700);
+		if (fabs(fabs(goal->pitch)-700) > 0){
+			goal->pitch/=-2000.0f;
+		}else{
+			goal->pitch = 0;
+		}
+
+		printf("yaw + %d\n", goal->yaw);
+		goal->yaw = (goal->yaw+7700);
+		if (fabs(fabs(goal->yaw)-700) > 0){
+			goal->yaw+=(goal->yaw/200000.0d);
+		}
+		goal->yaw = 0;
+		//goal->pitch = 0;
+		//goal->roll = 0;
+	
+
+		printf("throttle: %f roll: %f pitch: %f yaw: %f\n", goal->z, goal->roll, goal->pitch, goal->yaw);
+		pch = strtok(NULL, "\n");
+	    }
+    } else{
+	    num_since_last+=1;
+    }
+    if (num_since_last >= 750){
+	    alive = 0;
+    }
+    if (!alive){
+	    pruDataMem_int[0] = 0;
+	    goal->yaw = 0;
+	    goal->pitch = 0;
+	    goal->yaw = 0;
+	    printf("controller timed out\n");
+	    exit(0);
+    }
+
+
+
+    usleep(0);
+
+
 }
 
 void init_PID(PID_t * PID_x, double kP, double kI, double kD){
@@ -266,12 +341,18 @@ int main (void)
 	double bias = 0;
 	int count = 0;
 	int time = 0;
+	goal->z = 0;
+	goal->pitch = 0;
+	goal->roll = 0;
+	goal->yaw = 0;
 	while(pruDataMem_int[0] != 0){
 
+		get_set_point(goal, theta_p);
+		bias = goal->z;
 		if (bias < BIAS_MAX){
-
-			bias = BIAS_MAX/(1.0f+exp(-0.01656695d*time+6.2126d));
+			//bias = BIAS_MAX/(1.0f+exp(-0.01656695d*time+6.2126d));
 		} else{
+			//bias = BIAS_MAX;
 			bias = BIAS_MAX;
 		}
 		
@@ -285,11 +366,10 @@ int main (void)
 		calibrate_imu_frame(imu_frame, calib_data);
 
 		filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
-		get_set_point(goal, theta_p);
 		calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf, imu_frame);
 		output_pwm(next_pwm, pwm_out);
 
-		if ((count % 20) == 0){
+/*		if ((count % 20) == 0){
 			
 			printf("bias: % 03f", bias);
 			printf(", pitch: % 03.5f, cf_pitch: % 03.5f", theta_p->th, cf->pitch);
@@ -301,7 +381,7 @@ int main (void)
 			
 			printf("gyro: %f\n", (imu_frame->x_g/GYRO_MAX_RAW)*GYRO_SENSITIVITY);
 		}
-
+*/
 		fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 //		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 		time += 1;
@@ -348,8 +428,8 @@ void filter_loop(imu_data_t * imu_frame, comp_filter_t * theta_p, comp_filter_t 
 	//right is +x is header P9
 	//up is +z is the vector pointing from the cape to the beaglebone
 	calculate_next_comp_filter(theta_p, -imu_frame->y_a, imu_frame->x_g, DT);
-	calculate_next_comp_filter(theta_r, -imu_frame->x_a, -imu_frame->y_g, DT);
-	calculate_next_comp_filter(theta_y, imu_frame->z_a, imu_frame->z_g, DT);
+	calculate_next_comp_filter(theta_r, imu_frame->x_a, imu_frame->y_g, DT);
+	calculate_next_comp_filter(theta_y, -imu_frame->z_a, -imu_frame->z_g, DT);
 }
 
 void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf, imu_data_t * imu_data){
@@ -366,8 +446,8 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	
 	d_z = 0;//FIXME
 	//
-	d_yaw = 0;
-	d_roll = 0;
+	//d_yaw = 0;
+	//d_roll = 0;
 	//d_pitch = 0;
 
 	next_pwm->zero = d_pitch + d_roll + d_yaw - d_z + PWM_MIN;

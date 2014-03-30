@@ -14,7 +14,7 @@
 #define DT		.005f
 #define PWM_OFF		110000
 #define PWM_MIN		110000
-#define PWM_MAX		150000
+#define PWM_MAX		170000
 #define MIN(a,b)	(a<b ? a : b)
 #define MAX(a,b)	(a>b ? a : b)
 #define BIAS_INCREASE_RATE 1
@@ -24,21 +24,17 @@
 #define MAX_I		1000
 #define MIN_I		-MAX_I
 
-#define P_DEF		35 // 25
-#define I_DEF		15  // 15	
-#define D_DEF		20  // 20
-
-#define BIAS0 10000.0f
-#define BIAS1 10000.0f
-#define BIAS2 10000.0f
-#define BIAS3 10000.0f
+#define BIAS0 0.0f// 10000.0f
+#define BIAS1 0.0f//10000.0f
+#define BIAS2 0.0f//10000.0f
+#define BIAS3 0.0f//10000.0f
 
 #define MULT0 1.00f
 #define MULT1 1.00f
 #define MULT2 1.00f
 #define MULT3 1.00f
 
-#define BIAS_MAX 20000
+#define BIAS_MAX 50000
 #define PID_FILE "pid_values.txt"
 typedef struct imu_data_t{
 	double x_a;
@@ -82,10 +78,10 @@ typedef struct PID_t{
 } PID_t;
 
 typedef struct set_point_t{
-	double pitch;
-	double roll;
-	double yaw;
-	double z;
+	float pitch;
+	float roll;
+	float yaw;
+	float z;
 } set_point_t;
 
 void calibrate_imu_frame(imu_data_t * imu_frame, imu_data_t * calib_data);

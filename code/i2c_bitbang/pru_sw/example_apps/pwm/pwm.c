@@ -5,10 +5,10 @@
 #include <math.h>
 #include <signal.h>
 #define PRU_NUM 	0
-#define PWM_0_ADDRESS 9
-#define PWM_1_ADDRESS 10
-#define PWM_2_ADDRESS 11
-#define PWM_3_ADDRESS 8
+#define PWM_0_ADDRESS 11
+#define PWM_1_ADDRESS 8
+#define PWM_2_ADDRESS 10
+#define PWM_3_ADDRESS 9
 #define ALPHA		.999
 #define BETA		(1-ALPHA)
 #define G		2048
