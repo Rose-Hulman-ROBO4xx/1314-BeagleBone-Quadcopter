@@ -96,8 +96,8 @@ void initialize_pru(){
     pruDataMem_int = (volatile signed int*) pruDataMem;
 }
 void start_pru(){
-    prussdrv_exec_program (PRU_NUM, "./pwm_control_alg.bin");
     pruDataMem_int[0] = 1;
+    prussdrv_exec_program (PRU_NUM, "./pwm_control_alg.bin");
 }
 
 

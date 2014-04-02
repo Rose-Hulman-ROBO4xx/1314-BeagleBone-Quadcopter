@@ -31,11 +31,13 @@
 #define buff1 r12
 #define pixelByteCount   r13
 #define lineCount    r14
-#define numCols r8
-#define numRows r9
 #define exit r6
-#define num_bytes 640*480*2
+#define num_bytes 393216
 #define NUM_BYTES r17
+#define SET_RCK set r30, r30, CAM_RCK
+#define CLR_RCK clr r30, r30, CAM_RCK
+#define buffNo r8
+#define buff2 r9
 MEMACCESSPRUDATARAM:
 
 	MOV exit,EXIT_CTRL*4
@@ -57,30 +59,42 @@ MEMACCESSPRUDATARAM:
 	MOV       buff1, CAM_BUFF_1*4
 	LBBO      buff1, buff1, 0, 4
 
+	MOV       buff2, CAM_BUFF_2*4
+	LBBO      buff2, buff2, 0, 4
+	
 	MOV       currBuff, buff0
+	mov	  buffNo, 0
 	mov		r15, 0
 	mov r16,   100*4
 	mov NUM_BYTES, num_bytes
 
 		Loop:
+	add r15, r15, 1 //increment frame count
+	sbbo r15, r16, 0, 4
 
-		add r15, r15, 1
-		sbbo r15, r16, 0, 4
-		MOV   lineCount, 0
-		
-		WBS   CAM_BITS, CAM_VSYNC //Wait for a frame to start
+
+		WBS CAM_BITS, CAM_VSYNC //Wait for a frame to start
 		CLR   R30, R30, CAM_WE //enable writing to fifo
 		WBC   CAM_BITS, CAM_VSYNC //wait for frame to end
 		SET   R30, R30, CAM_WE //disable writing to fifo
-		WBS   CAM_BITS, CAM_VSYNC //Wait for a frame to start
-		CLR   R30, R30, CAM_RCK //need to pulse the clock for it to take
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-
+		SET   R30, R30, CAM_RCK //need to pulse the clock for it to take
 		CLR   R30, R30, CAM_RRST //reset the read pointer
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		CLR   R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
 		DELAY
 		DELAY
 		DELAY
@@ -92,14 +106,37 @@ MEMACCESSPRUDATARAM:
 		DELAY
 		DELAY
 		DELAY
-		SET   R30, R30, CAM_RRST //reset the read pointer
 		DELAY
 		DELAY
 		DELAY
 		DELAY
 		DELAY
 		CLR   R30, R30, CAM_RCK
-
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		SET   R30, R30, CAM_RCK
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		DELAY
+		CLR   R30, R30, CAM_RCK
+		
+		SET   R30, R30, CAM_RRST //reset the read pointer
+		DELAY
+		DELAY
+		DELAY
 		DELAY
 		DELAY
 		DELAY
@@ -107,47 +144,86 @@ MEMACCESSPRUDATARAM:
 		DELAY
 		MOV   pixelByteCount, 0
 
-			Pixels:
-			SET R30, R30, CAM_RCK
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-
+		Pixels:
 			MOV   r0.b0, CAM_BITS.b0
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
+			SET R30, R30, CAM_RCK
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
 			CLR R30, R30, CAM_RCK
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-		DELAY
-			SBBO  r0.b0, currBuff, pixelByteCount, 1
-			ADD   pixelByteCount, pixelByteCount, 1
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			MOV   r0.b1, CAM_BITS.b0
+			SET R30, R30, CAM_RCK
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			CLR R30, R30, CAM_RCK
+			DELAY
+			DELAY
+			DELAY
+			DELAY
+			SBBO  r0.b0, currBuff, pixelByteCount, 2
+			ADD   pixelByteCount, pixelByteCount, 2
 			QBGE  Pixels, pixelByteCount, NUM_BYTES
+	
+	
+	QBEQ handleBuff0, buffNo, 0
+	QBEQ handleBuff1, buffNo, 1
+	QBEQ handleBuff2, buffNo, 2
+	QBEQ handleBuff3, buffNo, 3
+	QBEQ handleBuff4, buffNo, 4
+handleBuff0:
+	mov currBuff, CAM_BUFF_1*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 1
+	QBA BUFF_DONE
+handleBuff1:
+	mov currBuff, CAM_BUFF_2*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 2
+	QBA BUFF_DONE
+handleBuff2:
+	mov currBuff, CAM_BUFF_3*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 3
+	QBA BUFF_DONE
 
-		QBNE Loop, r15, 5
 
-	MOV   r0, 0
-	SBBO  r0, swapBuff, 0, 4
-	MOV   r0, buff0
-	MOV   buff0, buff1
-	MOV   buff1, r0
-	MOV   currBuff, buff0
+handleBuff3:
+	mov currBuff, CAM_BUFF_4*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 4
+	QBA BUFF_DONE
+
+
+handleBuff4:
+	mov currBuff, CAM_BUFF_0*4
+	LBBO currBuff, currBuff, 0, 4
+	sbbo buffNo, swapBuff, 0, 4
+	mov buffNo, 0
+	QBA BUFF_DONE
+
+BUFF_DONE:
 
 	LBBO r0, exit, 0, 4
-	QBNE Quit, r15, 5
+	QBEQ Quit, r0, 0
 
-	//QBA Loop
+	QBA Loop
 
 
 

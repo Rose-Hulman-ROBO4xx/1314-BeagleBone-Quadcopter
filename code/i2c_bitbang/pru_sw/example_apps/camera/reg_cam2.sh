@@ -119,11 +119,49 @@ bus=1
 cam_addr=0x21
 
 i2cset -y $bus $cam_addr $reg_com7 0x80
+i2cset -y $bus $cam_addr $reg_clkrc 0x80
+i2cset -y $bus $cam_addr $reg_com11 0x0a
+i2cset -y $bus $cam_addr $reg_tslb 0x04
 i2cset -y $bus $cam_addr $reg_com7 0x04
+i2cset -y $bus $cam_addr $reg_com7 0x04
+i2cset -y $bus $cam_addr $reg_rgb444 0x00
+i2cset -y $bus $cam_addr $reg_com15 0xd0
+
+i2cset -y $bus $cam_addr $reg_hstart 0x16
+i2cset -y $bus $cam_addr $reg_hstop 0x04
+i2cset -y $bus $cam_addr $reg_href 0x24
+i2cset -y $bus $cam_addr $reg_vstart 0x02
+i2cset -y $bus $cam_addr $reg_vstop 0x7a
+i2cset -y $bus $cam_addr $reg_vref 0x0a
 i2cset -y $bus $cam_addr $reg_com10 0x02
-i2cset -y $bus $cam_addr $reg_com15 0xD0
-i2cset -y $bus $cam_addr 0x70 0x7F
-i2cset -y $bus $cam_addr 0x71 0x7F
+i2cset -y $bus $cam_addr $reg_com3 0x04
+i2cset -y $bus $cam_addr $reg_mvfp 0x3f
+i2cset -y $bus $cam_addr $reg_com14 0x19
+i2cset -y $bus $cam_addr 0x72 0x11
+i2cset -y $bus $cam_addr 0x73 0xf1
+
+i2cset -y $bus $cam_addr 0x4f 0x80
+i2cset -y $bus $cam_addr 0x50 0x80
+i2cset -y $bus $cam_addr 0x51 0x00
+i2cset -y $bus $cam_addr 0x52 0x22
+i2cset -y $bus $cam_addr 0x53 0x5e
+i2cset -y $bus $cam_addr 0x54 0x80
+i2cset -y $bus $cam_addr 0x56 0x40
+i2cset -y $bus $cam_addr 0x58 0x9e
+i2cset -y $bus $cam_addr 0x59 0x88
+i2cset -y $bus $cam_addr 0x5a 0x88
+i2cset -y $bus $cam_addr 0x5b 0x44
+i2cset -y $bus $cam_addr 0x5c 0x67
+i2cset -y $bus $cam_addr 0x5d 0x49
+i2cset -y $bus $cam_addr 0x5e 0x0e
+i2cset -y $bus $cam_addr 0x69 0x00
+i2cset -y $bus $cam_addr 0x6a 0x40
+i2cset -y $bus $cam_addr 0x6b 0x0a
+i2cset -y $bus $cam_addr 0x6c 0x0a
+i2cset -y $bus $cam_addr 0x6d 0x55
+i2cset -y $bus $cam_addr 0x6e 0x11
+i2cset -y $bus $cam_addr 0x6f 0x9f
+i2cset -y $bus $cam_addr 0xb0 0x84
 
 
 
