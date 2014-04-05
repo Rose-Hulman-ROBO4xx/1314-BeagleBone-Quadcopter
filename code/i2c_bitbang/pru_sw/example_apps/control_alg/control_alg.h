@@ -12,7 +12,7 @@
 #define PI 3.141592653589793238462643383279502884197169399375105
 #define RAD_TO_DEG	57.2957795f
 #define DT		.005f
-#define PWM_OFF		110000
+#define PWM_OFF		115000
 #define PWM_MIN		115000
 #define PWM_MAX		170000
 #define MIN(a,b)	(a<b ? a : b)
@@ -21,7 +21,7 @@
 //#define GYRO_SENSITIVITY 250
 #define GYRO_SENSITIVITY 2000 //gyro sensitivity in degrees/second
 #define GYRO_MAX_RAW	32768 //maximum raw output of gyro
-#define MAX_I		1000
+#define MAX_I		2000
 #define MIN_I		-MAX_I
 
 #define BIAS0 0.0f// 10000.0f
@@ -78,10 +78,10 @@ typedef struct PID_t{
 } PID_t;
 
 typedef struct set_point_t{
-	float pitch;
-	float roll;
-	float yaw;
-	float z;
+	double pitch;
+	double roll;
+	double yaw;
+	double z;
 } set_point_t;
 
 void calibrate_imu_frame(imu_data_t * imu_frame, imu_data_t * calib_data);

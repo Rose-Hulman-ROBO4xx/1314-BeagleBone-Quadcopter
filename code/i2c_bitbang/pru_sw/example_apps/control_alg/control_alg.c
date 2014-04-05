@@ -19,85 +19,92 @@ void signal_handler(int sig){
 }
 
 int get_set_point(set_point_t * goal, comp_filter_t * theta_r){
-    static int f = NULL;
-    static int num_since_last = 0;
-    static int alive = 1;
-    static int armed = 0;
-    if (f == NULL){
-	    f = open("asdf", O_NONBLOCK | O_RDONLY);
-            if (f <=0 ){
-                printf("couldn't open control file\n");
-		pruDataMem_int[0] = 0;
-            }
-    }
+	static int f = NULL;
+	static int num_since_last = 0;
+	static int alive = 1;
+	static int armed = 0;
+	static double roll_goal = 0;
+	static double pitch_goal = 0;
+	static double yaw_goal = 0;
+	static double z_goal = 0;
+	const double goal_rate = .2;
+	const double z_goal_rate = 10;
 
-    int x;
-    char buffer[256];
-    int num_read = read(f, buffer, 256);
-    buffer[num_read] = '\0';
-    //message format:
-    //throttle,aileron,elevator,rudder
-    //throttle is negated
-    //when increased:
-    //aileron should roll right->set point increase
-    //elevator should roll back->set point decrease
-    //rudder should turn right->set point decrease
-    if (num_read>=1){
-	    num_since_last = 0;
-	    char * pch;
-	    pch = strtok(buffer, "\n");
-	    while(pch != NULL){
-		printf("%s\n", pch);
-		sscanf(pch, "%f,%f,%f,%f", &(goal->z), &(goal->roll), &(goal->pitch), &(goal->yaw));
-		printf("%f %f %f %f", goal->z, goal->roll, goal->pitch, goal->yaw);
-		printf("--\n");
-		fflush(stdout);
-		
-		goal->z = (goal->z+32000)*.5;
-		if (goal->z > 1000){
-			armed = 1;
-		} else{
-			armed = 0;
+	if (f == NULL){
+		f = open("asdf", O_NONBLOCK | O_RDONLY);
+		if (f <=0 ){
+			printf("couldn't open control file\n");
+			pruDataMem_int[0] = 0;
 		}
+	}
 
-		goal->roll = (goal->roll);
-		goal->roll/=-2000.0f;
+	int x;
+	char buffer[256];
+	int num_read = read(f, buffer, 256);
+	buffer[num_read] = '\0';
+	//message format:
+	//throttle,aileron,elevator,rudder
+	//throttle is negated
+	//when increased:
+	//aileron should roll right->set point increase
+	//elevator should roll back->set point decrease
+	//rudder should turn right->set point decrease
+	if (num_read>=1){
+		num_since_last = 0;
+		char * pch;
+		pch = strtok(buffer, "\n");
+		while(pch != NULL){
+//			printf("%s\n", pch);
+			sscanf(pch, "%lf,%lf,%lf,%lf", &(z_goal), &(roll_goal), &(pitch_goal), &(yaw_goal));
+			//printf("%f %f %f %f", z_goal, roll_goal, pitch_goal, yaw_goal);
+			//printf("--\n");
 
-		goal->pitch = (goal->pitch);
-		goal->pitch/=-2000.0f;
+			//pitch_goal += 5000;
+			fflush(stdout);
 
-		printf("yaw + %d\n", goal->yaw);
-		goal->yaw = (goal->yaw+7700);
-		if (fabs(fabs(goal->yaw)-700) > 0){
-			goal->yaw+=(goal->yaw/200000.0d);
+			z_goal = (z_goal+32000)*.8;
+			if (z_goal > 1000){
+				armed = 1;
+			} else{
+				armed = 0;
+			}
+
+			roll_goal/=-2000.0f;
+
+			pitch_goal/=2000.0f;
+
+			yaw_goal/=(11796*4); //turn 90 degrees per second
+			pch = strtok(NULL, "\n");
 		}
-		goal->yaw = 0;
+		//goal->yaw = 0;
 		//goal->pitch = 0;
 		//goal->roll = 0;
-	
-
-		printf("throttle: %f roll: %f pitch: %f yaw: %f\n", goal->z, goal->roll, goal->pitch, goal->yaw);
-		pch = strtok(NULL, "\n");
-	    }
-    } else{
-	    num_since_last+=1;
-    }
-    if (num_since_last >= 750){
-	    alive = 0;
-    }
-    if (!alive){
-	    pruDataMem_int[0] = 0;
-	    goal->yaw = 0;
-	    goal->pitch = 0;
-	    goal->yaw = 0;
-	    printf("controller timed out\n");
-	    exit(0);
-    }
 
 
+		//printf("throttle: %f roll: %f pitch: %f yaw: %f\n", z_goal, roll_goal, pitch_goal, yaw_goal);
+	} else{
+		num_since_last+=1;
+	}
+	if (num_since_last >= 250){
+		alive = 0;
+	}
+	if (!alive){
+		pruDataMem_int[0] = 0;
+		goal->yaw = 0;
+		goal->pitch = 0;
+		goal->yaw = 0;
+		printf("controller timed out\n");
+		exit(0);
+	}
 
-    usleep(0);
-    return armed;
+	goal->yaw += yaw_goal;
+	goal->pitch = pitch_goal;
+	goal->roll = roll_goal;
+	goal->z = z_goal;
+
+
+	usleep(0);
+	return armed;
 
 
 }
@@ -119,7 +126,7 @@ void init_filter(comp_filter_t * comp_filter, double alpha, double beta, double 
 
 
 void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gyro, double dt){
-	
+
 	gyro = (gyro/GYRO_MAX_RAW)*GYRO_SENSITIVITY;
 	double accel_angle = acc/prev_data->g;
 	accel_angle = MAX(MIN(accel_angle, 1.0), -1.0);
@@ -132,11 +139,11 @@ void get_imu_frame(imu_data_t * imu_frame){
 	}
 	pruDataMem_int[1] = 0;
 	imu_frame->x_a = (signed short)pruDataMem_int[2];
-        imu_frame->y_a = (signed short)pruDataMem_int[3];
-        imu_frame->z_a = (signed short)pruDataMem_int[4];
-        imu_frame->x_g = (signed short)pruDataMem_int[5];
-        imu_frame->y_g = (signed short)pruDataMem_int[6];
-        imu_frame->z_g = (signed short)pruDataMem_int[7];
+	imu_frame->y_a = (signed short)pruDataMem_int[3];
+	imu_frame->z_a = (signed short)pruDataMem_int[4];
+	imu_frame->x_g = (signed short)pruDataMem_int[5];
+	imu_frame->y_g = (signed short)pruDataMem_int[6];
+	imu_frame->z_g = (signed short)pruDataMem_int[7];
 	imu_frame->sample_num = pruDataMem_int[12];
 }
 
@@ -150,51 +157,51 @@ pru_pwm_frame_t * get_pwm_pointer(){
 }
 
 void initialize_pru(){
-    unsigned int ret;
-    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+	unsigned int ret;
+	tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 
-    prussdrv_init ();
-    /* Open PRU Interrupt */
-    ret = prussdrv_open(PRU_EVTOUT_0);
-    if (ret)
-    {
-        printf("prussdrv_open open failed\n");
-        exit(ret);
-    }
-    
-    /* Get the interrupt initialized */
-    prussdrv_pruintc_init(&pruss_intc_initdata);
+	prussdrv_init ();
+	/* Open PRU Interrupt */
+	ret = prussdrv_open(PRU_EVTOUT_0);
+	if (ret)
+	{
+		printf("prussdrv_open open failed\n");
+		exit(ret);
+	}
 
-    //Initialize pointer to PRU data memory
-    if (PRU_NUM == 0)
-    {
-      prussdrv_map_prumem (PRUSS0_PRU0_DATARAM, &pruDataMem);
-    }
-    else if (PRU_NUM == 1)
-    {
-      prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, &pruDataMem);
-    }  
-    pruDataMem_int = (volatile signed int*) pruDataMem;
+	/* Get the interrupt initialized */
+	prussdrv_pruintc_init(&pruss_intc_initdata);
+
+	//Initialize pointer to PRU data memory
+	if (PRU_NUM == 0)
+	{
+		prussdrv_map_prumem (PRUSS0_PRU0_DATARAM, &pruDataMem);
+	}
+	else if (PRU_NUM == 1)
+	{
+		prussdrv_map_prumem (PRUSS0_PRU1_DATARAM, &pruDataMem);
+	}  
+	pruDataMem_int = (volatile signed int*) pruDataMem;
 }
 void start_pru(){
-    pruDataMem_int[0] = 1;
-    prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
+	pruDataMem_int[0] = 1;
+	prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
 }
 
 
 void uninitialize_pru(){
-    pruDataMem_int[0] = 0;
+	pruDataMem_int[0] = 0;
 
-    /* Wait until PRU0 has finished execution */
-    printf("\tINFO: Waiting for HALT command.\r\n");
-    prussdrv_pru_wait_event (PRU_EVTOUT_0);
+	/* Wait until PRU0 has finished execution */
+	printf("\tINFO: Waiting for HALT command.\r\n");
+	prussdrv_pru_wait_event (PRU_EVTOUT_0);
 
-    printf("\tINFO: PRU completed transfer.\r\n");
-    prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
+	printf("\tINFO: PRU completed transfer.\r\n");
+	prussdrv_pru_clear_event (PRU0_ARM_INTERRUPT);
 
-    /* Disable PRU and close memory mapping*/
-    prussdrv_pru_disable (PRU_NUM);
-    prussdrv_exit ();
+	/* Disable PRU and close memory mapping*/
+	prussdrv_pru_disable (PRU_NUM);
+	prussdrv_exit ();
 
 
 }
@@ -208,7 +215,7 @@ imu_data_t * get_calibration_data(){
 	calib_data->x_g = 0;
 	calib_data->y_g = 0;
 	calib_data->z_g = 0;
-	
+
 	int i;
 	printf("clearing DLPF on imu..\n");
 	for (i = 0; (i < 1000); i++){
@@ -217,7 +224,7 @@ imu_data_t * get_calibration_data(){
 
 	for (i = 0; (i < CALIBRATION_SAMPLES); i++){
 		get_imu_frame(&imu_data);
-		
+
 		calib_data->x_a += imu_data.x_a;
 		calib_data->y_a += imu_data.y_a;
 		calib_data->z_a += imu_data.z_a;
@@ -321,23 +328,23 @@ int main (void)
 	} else{
 		calib_data = malloc(sizeof(imu_data_t));
 		fscanf(calib_file, "%lf,%lf,%lf,%lf,%lf,%lf\n", &(calib_data->x_a), &(calib_data->y_a), &(calib_data->z_a), &(calib_data->x_g), &(calib_data->y_g), &(calib_data->z_g));
-//		printf("cal data: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
+		//		printf("cal data: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
 		fclose(calib_file);
 	}
 
-        signal(SIGINT, signal_handler);
+	signal(SIGINT, signal_handler);
 	printf("check calibration data for sanity: %f, %f, %f, %f, %f, %f\n", calib_data->x_a, calib_data->y_a, calib_data->z_a, calib_data->x_g, calib_data->y_g, calib_data->z_g);
-	
+
 	*z_pos = 0;
 	*z_vel = 0;
 
 	imu_data_t * imu_frame = malloc(sizeof(imu_data_t));
-	
+
 	init_filter(theta_p, ALPHA, BETA, G);
 	init_filter(theta_r, ALPHA, BETA, G);
 	init_filter(theta_y, 1, 0, G);
 
-	
+
 	double bias = 0;
 	int count = 0;
 	int time = 0;
@@ -356,7 +363,7 @@ int main (void)
 				//bias = BIAS_MAX;
 				bias = BIAS_MAX;
 			}
-			
+
 			count++;
 			if (imu_frame->sample_num != count){
 				printf("Skipped %d frames\n", imu_frame->sample_num-count+1);
@@ -368,22 +375,21 @@ int main (void)
 			filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
 			calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf, imu_frame);
 			output_pwm(next_pwm, pwm_out);
-
-	/*		if ((count % 20) == 0){
-				
+			
+			if ((count % 20) == 0){
+				/*
 				printf("bias: % 03f", bias);
 				printf(", pitch: % 03.5f, cf_pitch: % 03.5f", theta_p->th, cf->pitch);
 				printf(", roll: % 03.5f, cf_roll: % 03.5f", theta_r->th, cf->roll);
 				printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
+				*/
 				printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
-				printf("I: %f\n", PID_pitch->I);
-				printf("D: %f\n", PID_pitch->D);
-				
-				printf("gyro: %f\n", (imu_frame->x_g/GYRO_MAX_RAW)*GYRO_SENSITIVITY);
-			}
-	*/
+				printf("I: %f D: %f pitch: %f\n", PID_roll->I, PID_roll->D, theta_r->th);
+				printf("goalyaw: %f\n", goal->yaw);
+
+			}		
 			fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
-	//		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
+			//		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 			time += 1;
 		} else{ // not armed
 			time = 0;
@@ -397,6 +403,10 @@ int main (void)
 			PID_yaw->D = 0;
 			PID_z->I = 0;
 			PID_z->D = 0;
+			goal->z = 0;
+			goal->roll = 0;
+			goal->yaw = 0;
+			goal->pitch = 0;
 		}
 	}
 	printf("exiting...\n");
@@ -436,7 +446,7 @@ void filter_loop(imu_data_t * imu_frame, comp_filter_t * theta_p, comp_filter_t 
 	double temp_z_acc = imu_frame->z_a*fabs(cos(theta_p->th/RAD_TO_DEG)*cos(theta_r->th/RAD_TO_DEG));
 	temp_z_acc = ((temp_z_acc/32768.0f)*8.0f);
 	*z_vel += temp_z_acc;
-	
+
 	//forward is +y is towards the ethernet port
 	//right is +x is header P9
 	//up is +z is the vector pointing from the cape to the beaglebone
@@ -456,7 +466,7 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	cf->roll = d_roll;
 	cf->pitch = d_pitch;
 	cf->yaw = d_yaw;
-	
+
 	d_z = 0;//FIXME
 	//
 	//d_yaw = 0;
@@ -467,7 +477,7 @@ void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_fi
 	next_pwm->one = -d_pitch + d_roll - d_yaw - d_z + PWM_MIN;
 	next_pwm->two = -d_pitch - d_roll + d_yaw - d_z + PWM_MIN;
 	next_pwm->three = d_pitch - d_roll - d_yaw - d_z + PWM_MIN;
-	
+
 	next_pwm->zero = next_pwm->zero * MULT0 + bias + BIAS0;
 	next_pwm->one = next_pwm->one * MULT1 + bias + BIAS1;
 	next_pwm->two = next_pwm->two * MULT2 + bias + BIAS2;
@@ -484,13 +494,13 @@ double PID_loop(double goal, PID_t * PID_x, double value){
 	delta_error = goal - value;
 
 	P = delta_error;
-	I = (PID_x->I + delta_error*DT);
+	I = (PID_x->I + PID_x->kI*delta_error*DT);
 	I = MIN(MAX_I, MAX(MIN_I,I));
-	PID_x->I = I;
-	D = ((delta_error - PID_x->D));
-	PID_x->D = delta_error;
+	PID_x->I = I*.998;
+	D = PID_x->D - value;
+	PID_x->D = value;
 
-	return P*PID_x->kP + I*PID_x->kI + D*PID_x->kD/DT;
+	return P*PID_x->kP + I + D*PID_x->kD/DT;
 }
 
 
