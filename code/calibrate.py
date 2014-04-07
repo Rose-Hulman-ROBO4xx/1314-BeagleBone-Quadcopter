@@ -2,12 +2,37 @@
 import Tkinter as tk
 import atexit
 import sys
-class Application(tk.Frame):              
-	def __init__(self, master=None):
-		tk.Frame.__init__(self, master)   
-		self.grid()                      
-		self.createWidgets()
 
+def focus_callback(app, slider):
+	def callback(arg1):
+		slider.focus_force()
+		app.update(arg1)
+	return callback
+
+def cycle_callback(app):
+	def cycle(event):
+		print app.focus
+		if event.keysym == "Right":
+			app.pid_focus += 1
+		if event.keysym == "Left":
+			app.pid_focus -= 1
+
+		if app.pid_focus >= len(app.pid_sliders):
+			app.pid_focus = 0
+		if app.pid_focus < 0:
+			app.pid_focus = len(app.pid_sliders) -1
+		app.pid_sliders[app.pid_focus].focus_force()
+			
+		return "break"
+	return cycle
+
+class Application(tk.Frame):
+	def __init__(self, master=None):
+		tk.Frame.__init__(self, master)
+		self.pid_focus = 0
+		self.pid_sliders = []
+		self.createWidgets()
+		self.grid()
 	def createWidgets(self):
 
 
@@ -67,9 +92,14 @@ class Application(tk.Frame):
 			
 			
 		
-		self.pitch_p_slider = tk.Scale(self, from_=100, to=0, length = 800, variable=self.pitch_p, command=self.update)
-		self.pitch_i_slider = tk.Scale(self, from_=100, to=0, length = 800, variable=self.pitch_i, command=self.update)
-		self.pitch_d_slider = tk.Scale(self, from_=100, to=0, length = 800, variable=self.pitch_d, command=self.update)
+		self.pitch_p_slider = tk.Scale(self)
+		self.pitch_p_slider.configure(from_=100, to=0, length = 800, variable=self.pitch_p, command=focus_callback(self, self.pitch_p_slider))
+		self.pitch_i_slider = tk.Scale(self)
+		self.pitch_i_slider.configure(from_=100, to=0, length = 800, variable=self.pitch_i, command=focus_callback(self, self.pitch_i_slider))
+		self.pitch_d_slider = tk.Scale(self)
+		self.pitch_d_slider.configure(from_=100, to=0, length = 800, variable=self.pitch_d, command=focus_callback(self, self.pitch_d_slider))
+
+
 
 		self.roll_p_slider = tk.Scale(self, from_=100, to=0, length = 800, variable=self.roll_p, command=self.update)
 		self.roll_i_slider = tk.Scale(self, from_=100, to=0, length = 800, variable=self.roll_i, command=self.update)
@@ -108,6 +138,26 @@ class Application(tk.Frame):
 		self.link_pitch_roll = tk.Checkbutton(self, text="link", variable=self.linked, command=lambda: self.update(None))
 
 		self.link_pitch_roll.grid(row=3, column=3)
+
+		self.pid_sliders.append(self.pitch_p_slider)
+		self.pid_sliders.append(self.pitch_i_slider)
+		self.pid_sliders.append(self.pitch_d_slider)
+
+		self.pid_sliders.append(self.roll_p_slider)
+		self.pid_sliders.append(self.roll_i_slider)
+		self.pid_sliders.append(self.roll_d_slider)
+
+		self.pid_sliders.append(self.yaw_p_slider)
+		self.pid_sliders.append(self.yaw_i_slider)
+		self.pid_sliders.append(self.yaw_d_slider)
+
+		for slider in self.pid_sliders:
+			slider.bind("<Left>", cycle_callback(self))
+			slider.bind("<Right>", cycle_callback(self))
+
+
+
+
 		
 
 
@@ -120,6 +170,7 @@ class Application(tk.Frame):
 		print("pid: %d %d %d %d %d %d %d %d %d"%(self.pitch_p.get(), self.pitch_i.get(), self.pitch_d.get(),\
 							self.roll_p.get(), self.roll_i.get(), self.roll_d.get(),\
 							self.yaw_p.get(), self.yaw_i.get(), self.yaw_d.get()))
+
 		sys.stdout.flush()
 
 	def save(self, location="pid_values.txt~"):
@@ -134,9 +185,7 @@ class Application(tk.Frame):
 	
 
 
-
-
-app = Application()                
+app = Application()
 atexit.register(app.save)
 app.master.title('Sample application')    
 app.mainloop()                            
