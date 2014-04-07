@@ -49,31 +49,40 @@ int get_set_point(set_point_t * goal, comp_filter_t * theta_r){
 	//aileron should roll right->set point increase
 	//elevator should roll back->set point decrease
 	//rudder should turn right->set point decrease
+	int recieved_joy_update = 0;
 	if (num_read>=1){
 		num_since_last = 0;
 		char * pch;
 		pch = strtok(buffer, "\n");
 		while(pch != NULL){
 //			printf("%s\n", pch);
-			sscanf(pch, "%lf,%lf,%lf,%lf", &(z_goal), &(roll_goal), &(pitch_goal), &(yaw_goal));
-			//printf("%f %f %f %f", z_goal, roll_goal, pitch_goal, yaw_goal);
-			//printf("--\n");
+			if (pch[0] == 'p' && pch[1] =='i' && pch[2] == 'd' && pch[3] == ':'){
+				int rp, ri, rd, pp, pi, pd, yp, yi, yd;
+				sscanf(pch, "pid: %d %d %d %d %d %d %d %d %d", &rp, &ri, &rd, &pp, &pi, &pd, &yp, &yi, &yd);
+				printf("updated pid: %d %d %d, %d %d %d, %d %d %d\n", rp, ri, rd, pp, pi, pd, yp, yi, yd);
+			}else if (pch[0] == 'j' && pch[1] == 'o' && pch[2] == 'y' && pch[3] == ':'){
+				recieved_joy_update = 1;
 
-			//pitch_goal += 5000;
-			fflush(stdout);
+				sscanf(pch, "joy: %lf,%lf,%lf,%lf", &(z_goal), &(roll_goal), &(pitch_goal), &(yaw_goal));
+				//printf("%f %f %f %f", z_goal, roll_goal, pitch_goal, yaw_goal);
+				//printf("--\n");
 
-			z_goal = (z_goal+32000)*.8;
-			if (z_goal > 1000){
-				armed = 1;
-			} else{
-				armed = 0;
+				//pitch_goal += 5000;
+				fflush(stdout);
+
+				z_goal = (z_goal+32000)*.8;
+				if (z_goal > 1000){
+					armed = 1;
+				} else{
+					armed = 0;
+				}
+
+				roll_goal/=-2000.0f;
+
+				pitch_goal/=2000.0f;
+
+				yaw_goal/=(11796*4); //turn 90 degrees per second
 			}
-
-			roll_goal/=-2000.0f;
-
-			pitch_goal/=2000.0f;
-
-			yaw_goal/=(11796*4); //turn 90 degrees per second
 			pch = strtok(NULL, "\n");
 		}
 		//goal->yaw = 0;
@@ -82,7 +91,8 @@ int get_set_point(set_point_t * goal, comp_filter_t * theta_r){
 
 
 		//printf("throttle: %f roll: %f pitch: %f yaw: %f\n", z_goal, roll_goal, pitch_goal, yaw_goal);
-	} else{
+	}
+	if (!recieved_joy_update){
 		num_since_last+=1;
 	}
 	if (num_since_last >= 250){
