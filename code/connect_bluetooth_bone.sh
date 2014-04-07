@@ -41,6 +41,20 @@ rm -f /var/lock/*rfcomm0*
 until pppd proxyarp mtu 1280 persist nodeflate noauth lcp-echo-interval 10 crtscts lock 10.10.1.2:10.10.1.1 /dev/rfcomm0 100000000
 do
 	echo "retrying"
-	sleep1
+	sleep 1
+done
+#set the gateway to host's ip
+
+until route add default gw 10.10.1.1
+do
+	echo "retrying"
+	sleep 1
 done
 
+#populate the nameservers.  Might need to change when you leave rose.
+echo "domain rose-hulman.edu
+nameserver 137.112.18.59
+nameserver 137.112.5.28
+nameserver 137.112.4.196
+nameserver 137.112.12.11
+">>/etc/resolv.conf

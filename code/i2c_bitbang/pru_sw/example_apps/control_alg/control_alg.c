@@ -377,12 +377,12 @@ int main (void)
 			output_pwm(next_pwm, pwm_out);
 			
 			if ((count % 20) == 0){
-				/*
+				
 				printf("bias: % 03f", bias);
 				printf(", pitch: % 03.5f, cf_pitch: % 03.5f", theta_p->th, cf->pitch);
 				printf(", roll: % 03.5f, cf_roll: % 03.5f", theta_r->th, cf->roll);
 				printf(", yaw: % 03.5f, cf->yaw: % 03.5f", theta_y->th, cf->yaw);
-				*/
+				
 				printf(", m0: %d, m1: %d, m2: %d, m3: %d\n", next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 				printf("I: %f D: %f pitch: %f\n", PID_roll->I, PID_roll->D, theta_r->th);
 				printf("goalyaw: %f\n", goal->yaw);
