@@ -2,8 +2,8 @@ CONSULT CHRIS BEFORE CHANGING ANYTHING HERE,,,,,,,,,,,,,,,,,,,
 You can't just move the pins willy nilly.  You need to know all the design constraints.,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
 ,CAMERA,,,SAFTEY,,,IMU,,,PWM,,,Ultrasonic,,,BMP180,,GPS,
-,CAM D0,P8_45,The data pins can't be changed.,KILL SWITCH,P9_25,PRU0 input,SCL,P9_13,,PWM_0,P9_31,PRU0 output,TRIG,P8_11,PRU0 out,SCL,P9_19,TX,P9_22
-,CAM D1,P8_46,,,,,SDA,P9_14,,PWM_1,P9_29,PRU0 output,ECHO,P8_16,PRU0 in,SDA,P9_20,RX,P9_21
+,CAM D0,P8_45,The data pins can't be changed.,KILL SWITCH,P9_25,PRU0 input,SCL,P9_13,,PWM_0,P9_31,PRU0 output,TRIG,P8_27,"PRU1 out, shared with camera RCLK",SCL,P9_19,TX,P9_22
+,CAM D1,P8_46,,,,,SDA,P9_14,,PWM_1,P9_29,PRU0 output,ECHO,P8_28,PRU1 in,SDA,P9_20,RX,P9_21
 ,CAM D2,P8_43,,,,,INT,P9_15,,PWM_2,P9_30,PRU0 output,,,,,,,
 ,CAM D3,P8_44,,,,,,,,PWM_3,P9_28,PRU0 output,,,,,,,
 ,CAM D4,P8_41,,,,,,,,,,,,,,,,,
@@ -20,7 +20,7 @@ You can't just move the pins willy nilly.  You need to know all the design const
 ,CAM_STA (?),N/C,,,,,,,,,,,,,,,,,
 ,CAM_RCK,P8_27,PRU1 output,,,,,,,,,,,,,,,,
 ,CAM_WE,P8_29,PRU1 output,,,,,,,,,,,,,,,,
-,CAM_OE,P8_28,PRU1 output,,,,,,,,,,,,,,,,
+,CAM_OE,GND,PRU1 output,,,,,,,,,,,,,,,,
 ,CAM_WRST,CAM_SYNC,,,,,,,,,,,,,,,,,
 ,CAM_RRST,P8_30,PRU1 output,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
