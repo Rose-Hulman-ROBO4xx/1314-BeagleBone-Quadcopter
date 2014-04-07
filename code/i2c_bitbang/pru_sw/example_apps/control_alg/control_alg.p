@@ -50,6 +50,7 @@ DATA_LOOP:
 	SBCO imu_return_data.y_g, CONST_PRUDRAM, 24, 2 
 	SBCO imu_return_data.z_g, CONST_PRUDRAM, 28, 2 
 	sbco r14, CONST_PRUDRAM, 48, 4
+	
 
 	mov r8, 1
 	sbco r8, CONST_PRUDRAM, 4, 4
@@ -61,6 +62,10 @@ DATA_LOOP:
 	call SEND_PWM_PULSE
 	//call PWM_DELAY
 	
+	lbco r13, CONST_PRUDRAM, 52, 4
+	add r13, r13, 1
+	QBLT EXIT, r13, 250
+	sbco r13, CONST_PRUDRAM, 52, 4
 
 	lbco r13, CONST_PRUDRAM, 0, 4
 	QBEQ EXIT, R13, 0

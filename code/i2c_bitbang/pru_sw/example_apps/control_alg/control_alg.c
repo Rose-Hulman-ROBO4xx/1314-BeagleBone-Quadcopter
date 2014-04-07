@@ -18,7 +18,7 @@ void signal_handler(int sig){
 	pruDataMem_int[0] = 0;
 }
 
-int get_set_point(set_point_t * goal, comp_filter_t * theta_r){
+int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw){
 	static int f = NULL;
 	static int num_since_last = 0;
 	static int alive = 1;
@@ -58,13 +58,24 @@ int get_set_point(set_point_t * goal, comp_filter_t * theta_r){
 //			printf("%s\n", pch);
 			if (pch[0] == 'p' && pch[1] =='i' && pch[2] == 'd' && pch[3] == ':'){
 				int rp, ri, rd, pp, pi, pd, yp, yi, yd;
-				sscanf(pch, "pid: %d %d %d %d %d %d %d %d %d", &rp, &ri, &rd, &pp, &pi, &pd, &yp, &yi, &yd);
-				printf("updated pid: %d %d %d, %d %d %d, %d %d %d\n", rp, ri, rd, pp, pi, pd, yp, yi, yd);
+				sscanf(pch, "pid: %d %d %d %d %d %d %d %d %d", &pp, &pi, &pd, &rp, &ri, &rd, &yp, &yi, &yd);
+
+				PID_pitch->kP = pp;
+				PID_pitch->kI = pi;
+				PID_pitch->kD = pd;
+				PID_roll->kP = rp;
+				PID_roll->kI = ri;
+				PID_roll->kD = rd;
+				PID_yaw->kP = yp;
+				PID_yaw->kI = yi;
+				PID_yaw->kD = yd;
+
+				//printf("updated pid: %d %d %d, %d %d %d, %d %d %d\n", rp, ri, rd, pp, pi, pd, yp, yi, yd);
 			}else if (pch[0] == 'j' && pch[1] == 'o' && pch[2] == 'y' && pch[3] == ':'){
 				recieved_joy_update = 1;
 
 				sscanf(pch, "joy: %lf,%lf,%lf,%lf", &(z_goal), &(roll_goal), &(pitch_goal), &(yaw_goal));
-				//printf("%f %f %f %f", z_goal, roll_goal, pitch_goal, yaw_goal);
+				printf("%f %f %f %f\n", z_goal, roll_goal, pitch_goal, yaw_goal);
 				//printf("--\n");
 
 				//pitch_goal += 5000;
@@ -145,7 +156,7 @@ void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gy
 }
 
 void get_imu_frame(imu_data_t * imu_frame){
-	while(!pruDataMem_int[1]){ // wait for pru to signal that new data is available
+	while(!pruDataMem_int[1] &&(pruDataMem_int[0])){ // wait for pru to signal that new data is available
 	}
 	pruDataMem_int[1] = 0;
 	imu_frame->x_a = (signed short)pruDataMem_int[2];
@@ -155,6 +166,7 @@ void get_imu_frame(imu_data_t * imu_frame){
 	imu_frame->y_g = (signed short)pruDataMem_int[6];
 	imu_frame->z_g = (signed short)pruDataMem_int[7];
 	imu_frame->sample_num = pruDataMem_int[12];
+
 }
 
 pru_pwm_frame_t * get_pwm_pointer(){
@@ -195,12 +207,14 @@ void initialize_pru(){
 }
 void start_pru(){
 	pruDataMem_int[0] = 1;
+	pruDataMem_int[13] = 0;
 	prussdrv_exec_program (PRU_NUM, "./control_alg.bin");
 }
 
 
 void uninitialize_pru(){
 	pruDataMem_int[0] = 0;
+	pruDataMem_int[13] = 0;
 
 	/* Wait until PRU0 has finished execution */
 	printf("\tINFO: Waiting for HALT command.\r\n");
@@ -264,6 +278,7 @@ void output_pwm(pwm_frame_t * pwm_frame_next, pru_pwm_frame_t * pwm_out){
 	*(pwm_out->one) = pwm_frame_next->one;
 	*(pwm_out->two) = pwm_frame_next->two;
 	*(pwm_out->three) = pwm_frame_next->three;
+
 }
 
 void load_pid_values(PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z){
@@ -363,9 +378,10 @@ int main (void)
 	goal->roll = 0;
 	goal->yaw = 0;
 	while(pruDataMem_int[0] != 0){
+		pruDataMem_int[13] = 0;
 
 		get_imu_frame(imu_frame); //called because this basically controls our timesteps
-		if (get_set_point(goal, theta_p)){
+		if (get_set_point(goal, PID_pitch, PID_roll, PID_yaw)){
 			bias = goal->z;
 			if (bias < BIAS_MAX){
 				//bias = BIAS_MAX/(1.0f+exp(-0.01656695d*time+6.2126d));
@@ -385,7 +401,7 @@ int main (void)
 			filter_loop(imu_frame, theta_p, theta_r, theta_y, z_pos, z_vel);
 			calculate_next_pwm(next_pwm, theta_p, theta_r, theta_y, z_pos, z_vel, PID_pitch, PID_roll, PID_yaw, PID_z, goal, bias, cf, imu_frame);
 			output_pwm(next_pwm, pwm_out);
-			
+		/*	
 			if ((count % 20) == 0){
 				
 				printf("bias: % 03f", bias);
@@ -397,7 +413,8 @@ int main (void)
 				printf("I: %f D: %f pitch: %f\n", PID_roll->I, PID_roll->D, theta_r->th);
 				printf("goalyaw: %f\n", goal->yaw);
 
-			}		
+			}
+		*/
 			fprintf(response_log, "%d,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,%3.5f,\t%d,%d,%d,%d\n", bias, theta_p->th,cf->pitch, theta_r->th,cf->roll, theta_y->th, cf->yaw, *z_vel, next_pwm->zero, next_pwm->one, next_pwm->two, next_pwm->three);
 			//		printf("x_g: % 05.5f, x_a: % 05.5f, y_g: % 05.5f, y_a: % 05.5f, z_g: % 05.5f, z_a: % 05.5f\n", imu_frame->x_g, imu_frame->x_a, imu_frame->y_g, imu_frame->y_a, imu_frame->z_g, imu_frame->z_a);
 			time += 1;
