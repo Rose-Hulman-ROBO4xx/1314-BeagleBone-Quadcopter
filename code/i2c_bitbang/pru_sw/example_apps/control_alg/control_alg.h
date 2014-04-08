@@ -96,7 +96,7 @@ void uninitialize_pru();
 imu_data_t * get_calibration_data();
 void calculate_next_pwm(pwm_frame_t * next_pwm, comp_filter_t * theta_p, comp_filter_t * theta_r, comp_filter_t * theta_y, double * z_pos, double * z_vel, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z, set_point_t * goal, int bias, set_point_t * cf, imu_data_t * imu_data);
 void init_PID(PID_t * PID_x, double kP, double kI, double kD);
-int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw);
+int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, comp_filter_t * theta_y);
 double PID_loop(double goal, PID_t * PID_x, double value);
 void signal_handler(int sig);
 void load_pid_values(PID_t * PID_pitch, PID_t * PID_roll, PID_t * PID_yaw, PID_t * PID_z);
