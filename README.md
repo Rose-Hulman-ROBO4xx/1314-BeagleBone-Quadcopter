@@ -18,3 +18,6 @@ Here are a few things that should be updated:
 Here's a brief description of things that work:
 
 Here are a few things that should be updated:
+
+## License ##
+All software and hardware designs (frame, circuit board, etc.) here are under Creative Commons Share-Alike V3.0 License, located [here](https://creativecommons.org/licenses/by-sa/3.0/us/legalcode).
