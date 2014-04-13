@@ -1,20 +1,13 @@
 1314-BeagleBone-Quadcopter
 ==========================
 
-Create an inexpensive open-source project for a BeagleBone cape quadcopter
+Create an inexpensive open-source project for a BeagleBone cape quadcopter. As of the beginning of April, 2014, we have flight! Some videos of the initial flight testing are located [here](https://www.dropbox.com/sh/0pfk43b3zq14rjh/xk6Kl6lccb#/). Since then, the quadcopter has gotten easier to fly and more stable.
 
-## I2C Bit Bang##
-Here's a brief description of things that work:
+## Project Use ##
+All of the quadcopter side code is located in I2C Bitbang. 
+Control algorithm specific code is [here](https://github.com/Rose-Hulman-ROBO4xx/1314-BeagleBone-Quadcopter/tree/master_rev2/code/i2c_bitbang/pru_sw/example_apps/control_alg).
 
-Here are a few things that should be updated:
+Note: the master_rev2 branch is the current development branch.
 
-## Control Tower ##
-Here's a brief description of things that work:
-1. Loads the server on port 1337
-
-Here are a few things that should be updated:
-
-## Control Algorithm ##
-Here's a brief description of things that work:
-
-Here are a few things that should be updated:
+## License ##
+All software and hardware designs (frame, circuit board, etc.) here are under Creative Commons Share-Alike V3.0 License, located [here](https://creativecommons.org/licenses/by-sa/3.0/us/legalcode).
