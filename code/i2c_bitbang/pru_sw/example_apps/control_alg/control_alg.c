@@ -117,7 +117,7 @@ int get_set_point(set_point_t * goal, PID_t * PID_pitch, PID_t * PID_roll, PID_t
 		exit(0);
 	}
 	
-	if (fabs(yaw_goal) < .5){ //arbitrary yaw rate
+	if (fabs(yaw_goal) < .0001){ //arbitrary yaw rate
 		goal->yaw = theta_y->th; //set the goal to the current theta if the user is not yawing.
 	}
 
@@ -159,8 +159,10 @@ void calculate_next_comp_filter(comp_filter_t * prev_data, double acc, double gy
 }
 
 void get_imu_frame(imu_data_t * imu_frame){
-	while(!pruDataMem_int[1] &&(pruDataMem_int[0])){ // wait for pru to signal that new data is available
+	while(!pruDataMem_int[1] &&(pruDataMem_int[1000])){ // wait for pru to signal that new data is available
 	}
+
+
 	pruDataMem_int[1] = 0;
 	imu_frame->x_a = (signed short)pruDataMem_int[2];
 	imu_frame->y_a = (signed short)pruDataMem_int[3];
@@ -246,10 +248,14 @@ imu_data_t * get_calibration_data(){
 	int i;
 	printf("clearing DLPF on imu..\n");
 	for (i = 0; (i < 1000); i++){
+		
+		pruDataMem_int[13] = 0;
 		get_imu_frame(&imu_data);
 	}
 
 	for (i = 0; (i < CALIBRATION_SAMPLES); i++){
+		
+		pruDataMem_int[13] = 0;
 		get_imu_frame(&imu_data);
 
 		calib_data->x_a += imu_data.x_a;

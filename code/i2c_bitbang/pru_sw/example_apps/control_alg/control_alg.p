@@ -50,6 +50,8 @@ DATA_LOOP:
 	SBCO imu_return_data.y_g, CONST_PRUDRAM, 24, 2 
 	SBCO imu_return_data.z_g, CONST_PRUDRAM, 28, 2 
 	sbco r14, CONST_PRUDRAM, 48, 4
+
+    	MOV R31.b0, PRU0_ARM_INTERRUPT+16
 	
 
 	mov r8, 1
@@ -69,7 +71,7 @@ DATA_LOOP:
 
 	lbco r13, CONST_PRUDRAM, 0, 4
 	QBEQ EXIT, R13, 0
-	QBBC DATA_LOOP, R31, 14
+	JMP DATA_LOOP
 EXIT:
 	mov r3, 0
 	sbco r3, CONST_PRUDRAM, 0, 4

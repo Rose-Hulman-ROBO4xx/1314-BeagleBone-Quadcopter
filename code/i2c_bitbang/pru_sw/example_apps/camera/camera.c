@@ -135,7 +135,7 @@ int main (int argc, char ** argv)
 	}
 	int i;
 	for (i = 0; i < num_frames; i++){
-		while(i==pruDataMem_int[100]){usleep(1000);}
+		while(i==pruDataMem_int[100]){usleep(100000);}
 		int buffer = pruDataMem_int[1];
 		printf("%d buffer=%d\n", pruDataMem_int[100], buffer);
 
