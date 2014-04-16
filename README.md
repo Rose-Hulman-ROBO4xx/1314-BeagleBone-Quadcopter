@@ -10,4 +10,4 @@ Control algorithm specific code is [here](https://github.com/Rose-Hulman-ROBO4xx
 Note: the master_rev2 branch is the current development branch.
 
 ## License ##
-All software and hardware designs (frame, circuit board, etc.) here are under Creative Commons Share-Alike V3.0 License, located [here](https://creativecommons.org/licenses/by-sa/3.0/us/legalcode).
+All software and hardware designs (frame, circuit board, etc.) here are under Creative Commons Non-Commercial Share-Alike V3.0 License, located [here](http://creativecommons.org/licenses/by-nc-sa/3.0/us/legalcode).
