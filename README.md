@@ -1,5 +1,6 @@
-1314-BeagleBone-Quadcopter
+Snoopy Copter
 ==========================
+The quadcopter project got a rename recently. Named for the popular Peanuts character Snoopy, who always dreamed of flight, our flying Beaglebone will hopefully aid Snoopy in his quest to defeat the Red Baron!
 
 Create an inexpensive open-source project for a BeagleBone cape quadcopter. As of the beginning of April, 2014, we have flight! Some videos of the initial flight testing are located [here](https://www.dropbox.com/sh/0pfk43b3zq14rjh/xk6Kl6lccb#/). Since then, the quadcopter has gotten easier to fly and more stable.
 
