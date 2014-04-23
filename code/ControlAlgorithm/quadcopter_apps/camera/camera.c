@@ -7,6 +7,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <FreeImage.h>
+#include <string.h>
+
 #define PRU_NUM 	1
 #define PRU_FILE_NAME "camera.bin"
 
@@ -133,15 +136,34 @@ int main (int argc, char ** argv)
 		fprintf(stderr, "Failed to open image output file");
 		exit(-1);
 	}
-	int i;
+	
+	const char  *version = FreeImage_GetVersion();
+	printf("Freeimage version %s\n", version);
+
+	FIBITMAP* dib = FreeImage_Allocate(320, 203, 16, 0xF800, 0x07E0,0x001F); // allocate 320x203 RGB565 bitmap
+
+	int bytespp = FreeImage_GetLine(dib)/FreeImage_GetWidth(dib);
+
+	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+
+	if (image_type == FIT_BITMAP){
+		printf("1\n");
+	}
+
+	printf("%d %d\n", FreeImage_GetHeight(dib), FreeImage_GetWidth(dib));
+
+	BYTE * bits = FreeImage_GetBits(dib);
+	FILE * fp = fopen("image.data", "rb");
+	char filename[100];
+	int i = 0;
+
 	for (i = 0; i < num_frames; i++){
 		while(i==pruDataMem_int[100]){usleep(100000);}
 		int buffer = pruDataMem_int[1];
 		printf("%d buffer=%d\n", pruDataMem_int[100], buffer);
-
-		fwrite(pru1_ddr+buffer*320*240*2, sizeof(uint8_t), 320*203*2, image_data);
-
-		fflush(image_data);
+		sprintf(filename, "/media/usb/test_output_%d.bmp", i);
+		memcpy(bits, pru1_ddr+buffer*320*240*2, 320*203*2);
+		FreeImage_Save(FIF_BMP, dib, filename,0);
 	}
 	uninitialize_pru();
 	fflush(image_data);

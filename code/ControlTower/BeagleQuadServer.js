@@ -1,4 +1,4 @@
-#!/usr/bin/node
+#!/usr/bin/env nodejs
 // From Getting Started With node.js and socket.io 
 // http://codehenge.net/blog/2011/12/getting-started-with-node-js-and-socket-io-v0-7-part-2/
 // This is a general server for the various web frontends

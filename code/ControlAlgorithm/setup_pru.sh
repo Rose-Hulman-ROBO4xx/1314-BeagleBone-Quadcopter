@@ -8,3 +8,4 @@ echo BB-CAMERA > /sys/devices/bone_capemgr.*/slots
 echo BB-BONE-PRU-01 > /sys/devices/bone_capemgr.*/slots
 echo 30 > /sys/class/gpio/export
 echo 60 > /sys/class/gpio/export
+ldconfig /usr/xenomai/lib
