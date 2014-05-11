@@ -12,11 +12,12 @@ SHLVL=1
 HOME=/home/root
 LOGNAME=root
 
-
-cd /home/debian/1314-BeagleBone-Quadcopter/code/i2c_bitbang/pru_sw
+rm -f /tmp/BeagleQuad_ControlFifo.txt
+mkfifo /tmp/BeagleQuad_ControlFifo.txt
+cd /home/debian/1314-BeagleBone-Quadcopter/ControlAlgorithm/
 ./setup_pru.sh
-cd example_apps
+cd quadcopter_apps
 cd bin
 nice -n -20 ./control_alg &
-netcat -l -p 1234 > /tmp/asdf
+netcat -l -p 1234 > /tmp/BeagleQuad_ControlFifo.txt
 
