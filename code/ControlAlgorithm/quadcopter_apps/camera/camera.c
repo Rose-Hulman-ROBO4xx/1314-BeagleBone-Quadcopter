@@ -154,14 +154,13 @@ int main (int argc, char ** argv)
 
 	BYTE * bits = FreeImage_GetBits(dib);
 	FILE * fp = fopen("image.data", "rb");
-	char filename[100];
+	char filename[] = "/tmp/quadtempfs/latest_image.bmp";
 	int i = 0;
 
 	for (i = 0; i < num_frames; i++){
 		while(i==pruDataMem_int[100]){usleep(100000);}
 		int buffer = pruDataMem_int[1];
 		printf("%d buffer=%d\n", pruDataMem_int[100], buffer);
-		sprintf(filename, "/media/usb/test_output_%d.bmp", i);
 		memcpy(bits, pru1_ddr+buffer*320*240*2, 320*203*2);
 		FreeImage_Save(FIF_BMP, dib, filename,0);
 	}
