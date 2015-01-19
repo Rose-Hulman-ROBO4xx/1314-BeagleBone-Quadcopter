@@ -1,7 +1,7 @@
 1314-BeagleBone-Quadcopter
 ==========================
 
-Create an inexpensive open-source project for a BeagleBone cape quadcopter. As of the beginning of April, 2014, we have flight! Some videos of the initial flight testing are located [here](https://www.dropbox.com/sh/0pfk43b3zq14rjh/xk6Kl6lccb#/). Since then, the quadcopter has gotten easier to fly and more stable.
+Create an inexpensive open-source project for a BeagleBone cape quadcopter. As of the beginning of April, 2014, we have flight! Some videos of the initial flight testing are located [here](https://www.youtube.com/channel/UCQjzFn0xvlrpXOzlelPr4Zw/). Since then, the quadcopter has gotten easier to fly and more stable.
 
 ## Project Use ##
 All of the quadcopter side code is located in I2C Bitbang. 
