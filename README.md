@@ -19,6 +19,8 @@ Create an inexpensive open-source project for a BeagleBone cape quadcopter. As o
 
 ![View 7](https://raw.githubusercontent.com/Rose-Hulman-ROBO4xx/1314-BeagleBone-Quadcopter/master_rev2/noncode/Pictures/2014-03-30_14-17-21_300.jpg)
 
+421 grams!
+
 ## Project Use ##
 All of the quadcopter side code is located in I2C Bitbang. 
 Control algorithm specific code is [here](https://github.com/Rose-Hulman-ROBO4xx/1314-BeagleBone-Quadcopter/tree/master_rev2/code/i2c_bitbang/pru_sw/example_apps/control_alg).
